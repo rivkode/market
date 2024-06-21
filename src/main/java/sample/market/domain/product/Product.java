@@ -13,15 +13,20 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import sample.market.common.base.BaseEntity;
+import sample.market.common.util.TokenGenerator;
 
 @Entity
 @Getter
 @Table(indexes = {@Index(name = "seller_id_idx", columnList = "sellerId")})
 public class Product extends BaseEntity {
 
+    private static final String PRODUCT_PREFIX = "prd_";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String productToken;
 
     @Column(name = "sellerId")
     private Long sellerId;
@@ -53,6 +58,7 @@ public class Product extends BaseEntity {
         if (sellerId == null || sellerId <= 0) throw new IllegalArgumentException("invalid sellerId");
         if (price == null || price <= 0) throw new IllegalArgumentException("invalid price");
 
+        this.productToken = TokenGenerator.randomCharacterWithPrefix(PRODUCT_PREFIX);
         this.name = name;
         this.sellerId = sellerId;
         this.price = price;

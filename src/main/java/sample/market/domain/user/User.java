@@ -10,15 +10,19 @@ import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
 import sample.market.common.base.BaseEntity;
+import sample.market.common.util.TokenGenerator;
 
 @Entity
 @Getter
 public class User extends BaseEntity {
 
+    private static final String USER_PREFIX = "usr_";
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long id;
+
+    private String userToken;
 
     @Column(name = "username")
     private String username;
@@ -48,6 +52,7 @@ public class User extends BaseEntity {
         if (email == null || email.length() == 0) throw new IllegalArgumentException("empty email");
         if (password == null || password.length() == 0) throw new IllegalArgumentException("empty passowrd");
 
+        this.userToken = TokenGenerator.randomCharacterWithPrefix(USER_PREFIX);
         this.username = username;
         this.email = email;
         this.password = password;
