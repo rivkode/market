@@ -2,7 +2,6 @@ package sample.market.domain.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -111,7 +110,7 @@ class ProductServiceTest {
                 .build();
         productStore.store(product1);
 
-        ProductCommand command = ProductCommand.builder()
+        ProductCommand.RegisterProduct command = ProductCommand.RegisterProduct.builder()
                 .sellerId(user.getId())
                 .name(product1.getName())
                 .price(product1.getPrice())
