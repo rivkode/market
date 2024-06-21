@@ -21,7 +21,7 @@ public class UserApiController {
     private final UserFacade userFacade;
 
     @PostMapping
-    public ResponseEntity<RegisterResponse> registeruser(@Valid @RequestBody UserDto.RegisterRequest request) {
+    public ResponseEntity<RegisterResponse> registerUser(@Valid @RequestBody UserDto.RegisterRequest request) {
         UserCommand command = request.toCommand();
         UserInfo userInfo = userFacade.registerUser(command);
         RegisterResponse response = new RegisterResponse(userInfo);

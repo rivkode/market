@@ -28,7 +28,7 @@ class UserApiControllerTest extends ControllerTestSupport {
 
     @DisplayName("신규 유저를 등록한다.")
     @Test
-    void test() throws Exception{
+    void registerUser() throws Exception{
         // given
         UserDto.RegisterRequest request = RegisterRequest.builder()
                 .email("email@email.com")
@@ -56,6 +56,4 @@ class UserApiControllerTest extends ControllerTestSupport {
                 .andExpect(jsonPath("$.username").value("username"))
                 .andExpect(status().isCreated());
     }
-
-
 }

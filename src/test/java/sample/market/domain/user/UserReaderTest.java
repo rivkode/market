@@ -48,18 +48,18 @@ class UserReaderTest {
                 .email("email@email.com")
                 .password("password")
                 .role("user")
-                .username("username")
+                .username("iamuser")
                 .build();
 
 
         // when
-        userStore.store(user);
+        User savedUser = userStore.store(user);
 
         User geUser = userReader.getUser(user.getUsername());
 
         // then
-        assertThat(geUser.getEmail()).isEqualTo("email@email.com");
-        assertThat(geUser.getUsername()).isEqualTo("username");
+        assertThat(geUser.getEmail()).isEqualTo(savedUser.getEmail());
+        assertThat(geUser.getUsername()).isEqualTo(savedUser.getUsername());
     }
 
 
