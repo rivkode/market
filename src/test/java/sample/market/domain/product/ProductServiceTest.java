@@ -92,4 +92,40 @@ class ProductServiceTest {
 
     }
 
+    @DisplayName("상품 등록시 등록한 정보가 반환된다.")
+    @Test
+    void register() {
+        // given
+        User user = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(user);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(user.getId())
+                .build();
+        productStore.store(product1);
+
+        ProductCommand command = ProductCommand.builder()
+                .sellerId(user.getId())
+                .name(product1.getName())
+                .price(product1.getPrice())
+                .build();
+
+        // when
+        ProductInfo productInfo = productService.registerProduct(command);
+
+        // then
+        assertThat(productInfo.getSellerId()).isEqualTo(user.getId());
+        assertThat(productInfo.getStatus()).isEqualTo(product1.getStatus());
+        assertThat(productInfo.getName()).isEqualTo(product1.getName());
+        assertThat(productInfo.getPrice()).isEqualTo(product1.getPrice());
+    }
+
+
 }

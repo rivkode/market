@@ -14,8 +14,8 @@ public class ProductReaderImpl implements ProductReader {
     private final ProductRepository productRepository;
 
     @Override
-    public Product getProduct(Long orderId) {
-        return productRepository.findById(orderId)
+    public Product getProduct(Long productId) {
+        return productRepository.findById(productId)
                 .orElseThrow(EntityNotFoundException::new);
     }
 
