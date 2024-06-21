@@ -2,12 +2,14 @@ package sample.market.domain.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import sample.market.domain.product.Product;
+import sample.market.domain.product.ProductCommand;
 import sample.market.domain.product.ProductStore;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
@@ -54,7 +56,7 @@ class OrderServiceTest {
                 .build();
         productStore.store(product1);
 
-        OrderCommand command = OrderCommand.builder()
+        OrderCommand.RegisterOrder command = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product1.getId())
                 .price(product1.getPrice())
@@ -69,5 +71,71 @@ class OrderServiceTest {
         assertThat(orderInfo.getPrice()).isEqualTo(product1.getPrice());
     }
 
+    @DisplayName("구매자는 자신의 완료된 거래를 가져온다.")
+    @Test
+    void retrieveCompletedOrders() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
 
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+
+        Product product2 = Product.builder()
+                .price(3000)
+                .name("충전기")
+                .sellerId(seller.getId())
+                .build();
+
+        productStore.storeAll(List.of(product1, product2));
+
+        ProductCommand.RetrievePurchaseProduct command = ProductCommand.RetrievePurchaseProduct.builder()
+                .buyerId(buyer.getId())
+                .build();
+
+        OrderCommand.RegisterOrder orderCommand1 = OrderCommand.RegisterOrder.builder()
+                .buyerId(buyer.getId())
+                .productId(product1.getId())
+                .price(product1.getPrice())
+                .build();
+
+        OrderCommand.RegisterOrder orderCommand2 = OrderCommand.RegisterOrder.builder()
+                .buyerId(buyer.getId())
+                .productId(product2.getId())
+                .price(product2.getPrice())
+                .build();
+
+        Order order1 = orderCommand1.toEntity();
+        Order order2 = orderCommand2.toEntity();
+
+        order1.complete();
+        order2.complete();
+
+        orderStore.store(order1);
+        orderStore.store(order2);
+
+        // when
+        List<Order> orders = orderService.retrieveCompletedOrders(command);
+
+        // then
+        assertThat(orders.get(0).getBuyerId()).isEqualTo(buyer.getId());
+        assertThat(orders.get(0).getProductId()).isEqualTo(order1.getProductId());
+        assertThat(orders.get(1).getBuyerId()).isEqualTo(buyer.getId());
+        assertThat(orders.get(1).getProductId()).isEqualTo(order2.getProductId());
+    }
 }

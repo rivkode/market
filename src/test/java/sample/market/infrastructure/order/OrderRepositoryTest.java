@@ -1,4 +1,4 @@
-package sample.market.domain.order;
+package sample.market.infrastructure.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import sample.market.domain.order.Order;
+import sample.market.domain.order.Order.Status;
+import sample.market.domain.order.OrderStore;
 import sample.market.domain.product.Product;
 import sample.market.domain.product.ProductStore;
 import sample.market.domain.user.User;
@@ -16,7 +19,7 @@ import sample.market.domain.user.UserStore;
 
 @SpringBootTest
 @Transactional
-class OrderReaderTest {
+class OrderRepositoryTest {
 
     @Autowired
     private UserStore userStore;
@@ -28,55 +31,11 @@ class OrderReaderTest {
     private OrderStore orderStore;
 
     @Autowired
-    private OrderReader orderReader;
+    private OrderRepository orderRepository;
 
-
-    @DisplayName("orderId로 주문 조회")
+    @DisplayName("buyerId와 Status 조건으로 Order를 조회한다.")
     @Test
-    void getOrderByOrderId() {
-        // given
-        User seller = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        User buyer = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        userStore.store(seller);
-        userStore.store(buyer);
-
-        Product product1 = Product.builder()
-                .price(1000)
-                .name("마스크")
-                .sellerId(seller.getId())
-                .build();
-        productStore.store(product1);
-
-        Order order = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product1.getId())
-                .price(product1.getPrice())
-                .build();
-        orderStore.store(order);
-
-        // when
-        Order getOrder = orderReader.getOrder(order.getId());
-
-
-        // then
-        assertThat(getOrder.getPrice()).isEqualTo(product1.getPrice());
-        assertThat(getOrder.getProductId()).isEqualTo(product1.getId());
-        assertThat(getOrder.getBuyerId()).isEqualTo(buyer.getId());
-    }
-
-    @DisplayName("구매완료된 상품을 가져온다.")
-    @Test
-    void getPurchasedProducts() {
+    void findByBuyerIdAndStatus() {
         // given
         User seller = User.builder()
                 .email("email@email.com")
@@ -110,7 +69,8 @@ class OrderReaderTest {
         orderStore.store(order);
 
         // when
-        List<Order> orders = orderReader.getPurchasedProducts(buyer.getId());
+        List<Order> orders = orderRepository.findByBuyerIdAndStatus(buyer.getId(),
+                Status.ORDER_COMPLETE);
 
         // then
         assertThat(orders).hasSize(1)
@@ -118,9 +78,5 @@ class OrderReaderTest {
                 .containsExactlyInAnyOrder(
                         tuple(buyer.getId(), product1.getId())
                 );
-
     }
-
-
-
 }
