@@ -74,7 +74,7 @@ class OrderReaderTest {
         assertThat(getOrder.getBuyerId()).isEqualTo(buyer.getId());
     }
 
-    @DisplayName("구매완료된 상품을 가져온다.")
+    @DisplayName("구매자는 완료된 거래를 가져온다.")
     @Test
     void getPurchasedProducts() {
         // given
@@ -110,7 +110,7 @@ class OrderReaderTest {
         orderStore.store(order);
 
         // when
-        List<Order> orders = orderReader.getPurchasedProducts(buyer.getId());
+        List<Order> orders = orderReader.getCompletedProducts(buyer.getId());
 
         // then
         assertThat(orders).hasSize(1)
@@ -120,6 +120,51 @@ class OrderReaderTest {
                 );
 
     }
+
+    @DisplayName("구매자는 시작된 거래를 가져온다.")
+    @Test
+    void getInitProducts() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        Order order = Order.builder()
+                .buyerId(buyer.getId())
+                .productId(product1.getId())
+                .price(product1.getPrice())
+                .build();
+        orderStore.store(order);
+
+        // when
+        List<Order> orders = orderReader.getInitProducts(buyer.getId());
+
+        // then
+        assertThat(orders).hasSize(1)
+                .extracting("buyerId", "productId")
+                .containsExactlyInAnyOrder(
+                        tuple(buyer.getId(), product1.getId())
+                );
+    }
+
 
 
 

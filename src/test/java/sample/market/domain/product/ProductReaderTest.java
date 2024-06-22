@@ -84,6 +84,38 @@ class ProductReaderTest {
                 );
     }
 
+    @DisplayName("상품 Id 리스트로 예약된 상품을 조회한다.")
+    @Test
+    void getReservedProductsByIds() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        product1.reserved();
+        productStore.store(product1);
+
+        // when
+        List<Product> products = productReader.getReservedProductsByIds(List.of(product1.getId()));
+
+        // then
+        assertThat(products).hasSize(1)
+                .extracting("sellerId", "name", "price")
+                .containsExactlyInAnyOrder(
+                        tuple(seller.getId(), product1.getName(), product1.getPrice())
+                );
+    }
+
+
 
 
 

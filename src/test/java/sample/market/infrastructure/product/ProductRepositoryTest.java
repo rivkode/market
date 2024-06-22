@@ -106,4 +106,45 @@ class ProductRepositoryTest {
 
     }
 
+    @DisplayName("RESERVED된 상품 Id들로 상품을 가져온다.")
+    @Test
+    void findAllByIdInAndStatus() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        product1.reserved();
+        productStore.store(product1);
+
+
+        // when
+        List<Product> products = productRepository.findAllByIdInAndStatus(List.of(product1.getId()),
+                Status.RESERVED);
+
+        // then
+        assertThat(products).hasSize(1)
+                .extracting("sellerId", "name", "price")
+                .containsExactlyInAnyOrder(
+                        tuple(seller.getId(), product1.getName(), product1.getPrice())
+                );
+    }
+
+
 }
