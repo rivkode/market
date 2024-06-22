@@ -52,7 +52,7 @@ public class ProductDto {
 
     @Getter
     @NoArgsConstructor
-    public static class RetrieveRequest {
+    public static class RetrievePurchasedRequest {
         @NotNull(message = "buyerId는 필수입력값입니다.")
         private Long buyerId;
 
@@ -63,6 +63,32 @@ public class ProductDto {
 
         }
     }
+
+    @Getter
+    @NoArgsConstructor
+    public class RetrieveReservedRequestWithSeller {
+        @NotNull(message = "sellerId는 필수입력값입니다.")
+        private Long sellerId;
+
+        public ProductCommand.RetrieveReservedProductsBySeller toCommand() {
+            return ProductCommand.RetrieveReservedProductsBySeller.builder()
+                    .sellerId(sellerId)
+                    .build();
+        }
+    }
+    @Getter
+    @NoArgsConstructor
+    public class RetrieveReservedRequestWithBuyer {
+        @NotNull(message = "sellerId는 필수입력값입니다.")
+        private Long buyerId;
+
+        public ProductCommand.RetrieveReservedProductsByBuyer toCommand() {
+            return ProductCommand.RetrieveReservedProductsByBuyer.builder()
+                    .sellerId(buyerId)
+                    .build();
+        }
+    }
+
 
     @Getter
     public static class RetrieveResponse {

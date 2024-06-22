@@ -34,4 +34,15 @@ public class ProductCommand {
 
     }
 
+    @Getter
+    @Builder
+    public static class RetrieveReservedProductsBySeller {
+        private final Long sellerId;
+    }
+
+    @Getter
+    @Builder
+    public static class RetrieveReservedProductsByBuyer {
+        private final Long sellerId;
+    }
 }
