@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import sample.market.domain.product.Product;
+import sample.market.domain.product.Product.Status;
 import sample.market.domain.product.ProductStore;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
@@ -63,4 +64,46 @@ class ProductRepositoryTest {
                         tuple(seller.getId(), product1.getName(), product1.getPrice())
                 );
     }
+
+    @DisplayName("sellerId와 status로 상품을 조회한다.")
+    @Test
+    void findAllBySellerIdAndStatus() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        product1.reserved();
+        productStore.store(product1);
+
+
+        // when
+        List<Product> products = productRepository.findAllBySellerIdAndStatus(seller.getId(),
+                Status.RESERVED);
+
+        // then
+        assertThat(products).hasSize(1)
+                .extracting("sellerId", "name", "price")
+                .containsExactlyInAnyOrder(
+                        tuple(seller.getId(), product1.getName(), product1.getPrice())
+                );
+
+    }
+
 }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import sample.market.domain.product.Product.Status;
+import sample.market.domain.product.ProductCommand.RetrieveReservedProductsBySeller;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
 
@@ -125,6 +126,42 @@ class ProductServiceTest {
         assertThat(productInfo.getName()).isEqualTo(product1.getName());
         assertThat(productInfo.getPrice()).isEqualTo(product1.getPrice());
     }
+
+    @DisplayName("sellerId와 status로 상품을 조회한다.")
+    @Test
+    void retrieveReservedProductsBySeller() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        product1.reserved();
+        productStore.store(product1);
+
+        ProductCommand.RetrieveReservedProductsBySeller command = ProductCommand.RetrieveReservedProductsBySeller.builder()
+                .sellerId(seller.getId())
+                .build();
+
+        // when
+        List<ProductInfo> productInfos = productService.retrieveReservedProductsBySeller(command);
+
+        // then
+        assertThat(productInfos).hasSize(1)
+                .extracting("sellerId", "name", "price", "status")
+                .containsExactlyInAnyOrder(
+                        tuple(seller.getId(), product1.getName(), product1.getPrice(), product1.getStatus())
+                );
+    }
+
 
 
 }
