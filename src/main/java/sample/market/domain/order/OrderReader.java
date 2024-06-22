@@ -6,5 +6,7 @@ public interface OrderReader {
 
     Order getOrder(Long orderId);
 
-    List<Order> getPurchasedProducts(Long buyerId);
+    List<Order> getCompletedProducts(Long buyerId);
+
+    List<Order> getInitProducts(Long buyerId);
 }

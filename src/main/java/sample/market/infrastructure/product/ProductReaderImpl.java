@@ -29,4 +29,9 @@ public class ProductReaderImpl implements ProductReader {
     public List<Product> getReservedProductsBySellerId(Long sellerId) {
         return productRepository.findAllBySellerIdAndStatus(sellerId, Status.RESERVED);
     }
+
+    @Override
+    public List<Product> getReservedProductsByIds(List<Long> productIds) {
+        return productRepository.findAllByIdInAndStatus(productIds, Status.RESERVED);
+    }
 }

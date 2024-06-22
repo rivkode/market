@@ -84,7 +84,7 @@ public class ProductDto {
 
         public ProductCommand.RetrieveReservedProductsByBuyer toCommand() {
             return ProductCommand.RetrieveReservedProductsByBuyer.builder()
-                    .sellerId(buyerId)
+                    .buyerId(buyerId)
                     .build();
         }
     }

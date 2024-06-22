@@ -54,15 +54,15 @@ public class ProductApiController {
                 .body(response);
     }
 
-//    @GetMapping("/reserved/buyer")
-//    public ResponseEntity<RetrieveResponse> retrieveReservedProductByBuyer(
-//            @Valid @RequestBody ProductDto.RetrieveReservedRequestWithBuyer request) {
-//        ProductCommand.RetrieveReservedProductsByBuyer command = request.toCommand();
-//        List<ProductInfo> productInfos = productFacade.retrieveReservedProductsByBuyer(command);
-//        RetrieveResponse response = new RetrieveResponse(productInfos);
-//
-//        return ResponseEntity.status(HttpStatus.OK)
-//                .body(response);
-//    }
+    @GetMapping("/reserved/buyer")
+    public ResponseEntity<RetrieveResponse> retrieveReservedProductByBuyer(
+            @Valid @RequestBody ProductDto.RetrieveReservedRequestWithBuyer request) {
+        ProductCommand.RetrieveReservedProductsByBuyer command = request.toCommand();
+        List<ProductInfo> productInfos = productFacade.retrieveReservedProductsByBuyer(command);
+        RetrieveResponse response = new RetrieveResponse(productInfos);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
+    }
 
 }

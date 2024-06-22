@@ -9,4 +9,6 @@ public interface ProductReader {
     List<Product> getProductListByIds(List<Long> productIds);
 
     List<Product> getReservedProductsBySellerId(Long sellerId);
+
+    List<Product> getReservedProductsByIds(List<Long> productIds);
 }

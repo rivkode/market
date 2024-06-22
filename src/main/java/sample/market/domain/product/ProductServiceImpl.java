@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import sample.market.domain.order.Order;
 import sample.market.domain.order.OrderService;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
+import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsBySeller;
 
 @Service
@@ -52,6 +53,16 @@ public class ProductServiceImpl implements ProductService{
     public List<ProductInfo> retrieveReservedProductsBySeller(
             RetrieveReservedProductsBySeller command) {
         List<Product> products = productReader.getReservedProductsBySellerId(command.getSellerId());
+        return productInfoMapper.of(products);
+    }
+
+    @Override
+    public List<ProductInfo> retrieveReservedProductsByBuyer(RetrieveReservedProductsByBuyer command) {
+        List<Order> orders = orderService.retrieveInitOrders(command);
+        List<Long> productIds = orders.stream()
+                .map(Order::getProductId)
+                .collect(Collectors.toList());
+        List<Product> products = productReader.getReservedProductsByIds(productIds);
         return productInfoMapper.of(products);
     }
 }

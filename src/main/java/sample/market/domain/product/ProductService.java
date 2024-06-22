@@ -2,6 +2,7 @@ package sample.market.domain.product;
 
 import java.util.List;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
+import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsBySeller;
 
 public interface ProductService {
@@ -14,4 +15,6 @@ public interface ProductService {
     List<ProductInfo> retrievePurchasedProducts(RetrievePurchaseProduct command);
 
     List<ProductInfo> retrieveReservedProductsBySeller(RetrieveReservedProductsBySeller command);
+
+    List<ProductInfo> retrieveReservedProductsByBuyer(RetrieveReservedProductsByBuyer command);
 }

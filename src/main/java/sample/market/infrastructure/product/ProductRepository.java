@@ -30,4 +30,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @return
      */
     List<Product> findAllBySellerIdAndStatus(Long sellerId, Status status);
+
+    /**
+     * select *
+     * from product
+     * where id in (1, 2, 3 ...) and
+     * status = Status. RESERVED
+     *
+     * @param productIds
+     * @param status
+     * @return
+     */
+    List<Product> findAllByIdInAndStatus(List<Long> productIds, Status status);
 }

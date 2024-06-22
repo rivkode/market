@@ -28,8 +28,8 @@ public class ProductFacade {
         return productInfos;
     }
 
-//    public List<ProductInfo> retrieveReservedProductsByBuyer(RetrieveReservedProductsByBuyer command) {
-//        List<ProductInfo> productInfos = productService.retrieveReservedProductsByBuyer(command);
-//        return productInfos;
-//    }
+    public List<ProductInfo> retrieveReservedProductsByBuyer(RetrieveReservedProductsByBuyer command) {
+        List<ProductInfo> productInfos = productService.retrieveReservedProductsByBuyer(command);
+        return productInfos;
+    }
 }

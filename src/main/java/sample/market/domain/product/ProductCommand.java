@@ -43,6 +43,6 @@ public class ProductCommand {
     @Getter
     @Builder
     public static class RetrieveReservedProductsByBuyer {
-        private final Long sellerId;
+        private final Long buyerId;
     }
 }

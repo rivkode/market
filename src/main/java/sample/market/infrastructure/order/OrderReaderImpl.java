@@ -22,7 +22,12 @@ public class OrderReaderImpl implements OrderReader {
     }
 
     @Override
-    public List<Order> getPurchasedProducts(Long buyerId) {
+    public List<Order> getCompletedProducts(Long buyerId) {
         return orderRepository.findByBuyerIdAndStatus(buyerId, Status.ORDER_COMPLETE);
+    }
+
+    @Override
+    public List<Order> getInitProducts(Long buyerId) {
+        return orderRepository.findByBuyerIdAndStatus(buyerId, Status.INIT);
     }
 }

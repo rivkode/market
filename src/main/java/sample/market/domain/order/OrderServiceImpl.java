@@ -1,13 +1,10 @@
 package sample.market.domain.order;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import sample.market.domain.product.Product;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
-import sample.market.domain.product.ProductInfo;
-import sample.market.domain.product.ProductService;
+import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
 
 @Component
 @RequiredArgsConstructor
@@ -25,8 +22,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> retrieveCompletedOrders(RetrievePurchaseProduct command) {
-        List<Order> orders = orderReader.getPurchasedProducts(command.getBuyerId());
+        List<Order> orders = orderReader.getCompletedProducts(command.getBuyerId());
+        return orders;
+    }
 
+    @Override
+    public List<Order> retrieveInitOrders(RetrieveReservedProductsByBuyer command) {
+        List<Order> orders = orderReader.getInitProducts(command.getBuyerId());
         return orders;
     }
 }
