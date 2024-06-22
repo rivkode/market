@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import sample.market.domain.product.Product;
+import sample.market.domain.product.Product.Status;
 import sample.market.domain.product.ProductReader;
 
 @Component
@@ -22,5 +23,15 @@ public class ProductReaderImpl implements ProductReader {
     @Override
     public List<Product> getProductListByIds(List<Long> productIds) {
         return productRepository.findAllByIdIn(productIds);
+    }
+
+    @Override
+    public List<Product> getReservedProductsBySellerId(Long sellerId) {
+        return productRepository.findAllBySellerIdAndStatus(sellerId, Status.RESERVED);
+    }
+
+    @Override
+    public List<Product> getReservedProductsByIds(List<Long> productIds) {
+        return productRepository.findAllByIdInAndStatus(productIds, Status.RESERVED);
     }
 }

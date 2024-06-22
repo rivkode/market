@@ -1,7 +1,9 @@
 package sample.market.domain.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,70 @@ class ProductReaderTest {
         // then
         assertThat(getProduct.getStatus()).isEqualTo(Status.PREPARE);
     }
+
+    @DisplayName("sellerId와 status로 상품을 조회한다.")
+    @Test
+    void getReservedProductsBySellerId() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        product1.reserved();
+        productStore.store(product1);
+
+        // when
+        List<Product> products = productReader.getReservedProductsBySellerId(seller.getId());
+
+        // then
+        assertThat(products).hasSize(1)
+                .extracting("sellerId", "name", "price")
+                .containsExactlyInAnyOrder(
+                        tuple(seller.getId(), product1.getName(), product1.getPrice())
+                );
+    }
+
+    @DisplayName("상품 Id 리스트로 예약된 상품을 조회한다.")
+    @Test
+    void getReservedProductsByIds() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        product1.reserved();
+        productStore.store(product1);
+
+        // when
+        List<Product> products = productReader.getReservedProductsByIds(List.of(product1.getId()));
+
+        // then
+        assertThat(products).hasSize(1)
+                .extracting("sellerId", "name", "price")
+                .containsExactlyInAnyOrder(
+                        tuple(seller.getId(), product1.getName(), product1.getPrice())
+                );
+    }
+
+
 
 
 

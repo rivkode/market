@@ -1,4 +1,4 @@
-package sample.market.domain.order;
+package sample.market.infrastructure.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -10,13 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import sample.market.domain.product.Product;
+import sample.market.domain.product.Product.Status;
 import sample.market.domain.product.ProductStore;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
 
 @SpringBootTest
 @Transactional
-class OrderReaderTest {
+class ProductRepositoryTest {
 
     @Autowired
     private UserStore userStore;
@@ -25,15 +26,11 @@ class OrderReaderTest {
     private ProductStore productStore;
 
     @Autowired
-    private OrderStore orderStore;
+    private ProductRepository productRepository;
 
-    @Autowired
-    private OrderReader orderReader;
-
-
-    @DisplayName("orderId로 주문 조회")
+    @DisplayName("상품 id 리스트로 상품을 조회한다.")
     @Test
-    void getOrderByOrderId() {
+    void findAllByIdIn() {
         // given
         User seller = User.builder()
                 .email("email@email.com")
@@ -55,28 +52,22 @@ class OrderReaderTest {
                 .name("마스크")
                 .sellerId(seller.getId())
                 .build();
-        productStore.store(product1);
-
-        Order order = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product1.getId())
-                .price(product1.getPrice())
-                .build();
-        orderStore.store(order);
+        Product savedProduct = productStore.store(product1);
 
         // when
-        Order getOrder = orderReader.getOrder(order.getId());
-
+        List<Product> products = productRepository.findAllByIdIn(List.of(savedProduct.getId()));
 
         // then
-        assertThat(getOrder.getPrice()).isEqualTo(product1.getPrice());
-        assertThat(getOrder.getProductId()).isEqualTo(product1.getId());
-        assertThat(getOrder.getBuyerId()).isEqualTo(buyer.getId());
+        assertThat(products).hasSize(1)
+                .extracting("sellerId", "name", "price")
+                .containsExactlyInAnyOrder(
+                        tuple(seller.getId(), product1.getName(), product1.getPrice())
+                );
     }
 
-    @DisplayName("구매자는 완료된 거래를 가져온다.")
+    @DisplayName("sellerId와 status로 상품을 조회한다.")
     @Test
-    void getPurchasedProducts() {
+    void findAllBySellerIdAndStatus() {
         // given
         User seller = User.builder()
                 .email("email@email.com")
@@ -98,32 +89,26 @@ class OrderReaderTest {
                 .name("마스크")
                 .sellerId(seller.getId())
                 .build();
+        product1.reserved();
         productStore.store(product1);
 
-        Order order = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product1.getId())
-                .price(product1.getPrice())
-                .build();
-
-        order.complete();
-        orderStore.store(order);
 
         // when
-        List<Order> orders = orderReader.getCompletedProducts(buyer.getId());
+        List<Product> products = productRepository.findAllBySellerIdAndStatus(seller.getId(),
+                Status.RESERVED);
 
         // then
-        assertThat(orders).hasSize(1)
-                .extracting("buyerId", "productId")
+        assertThat(products).hasSize(1)
+                .extracting("sellerId", "name", "price")
                 .containsExactlyInAnyOrder(
-                        tuple(buyer.getId(), product1.getId())
+                        tuple(seller.getId(), product1.getName(), product1.getPrice())
                 );
 
     }
 
-    @DisplayName("구매자는 시작된 거래를 가져온다.")
+    @DisplayName("RESERVED된 상품 Id들로 상품을 가져온다.")
     @Test
-    void getInitProducts() {
+    void findAllByIdInAndStatus() {
         // given
         User seller = User.builder()
                 .email("email@email.com")
@@ -145,27 +130,21 @@ class OrderReaderTest {
                 .name("마스크")
                 .sellerId(seller.getId())
                 .build();
+        product1.reserved();
         productStore.store(product1);
 
-        Order order = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product1.getId())
-                .price(product1.getPrice())
-                .build();
-        orderStore.store(order);
 
         // when
-        List<Order> orders = orderReader.getInitProducts(buyer.getId());
+        List<Product> products = productRepository.findAllByIdInAndStatus(List.of(product1.getId()),
+                Status.RESERVED);
 
         // then
-        assertThat(orders).hasSize(1)
-                .extracting("buyerId", "productId")
+        assertThat(products).hasSize(1)
+                .extracting("sellerId", "name", "price")
                 .containsExactlyInAnyOrder(
-                        tuple(buyer.getId(), product1.getId())
+                        tuple(seller.getId(), product1.getName(), product1.getPrice())
                 );
     }
-
-
 
 
 }

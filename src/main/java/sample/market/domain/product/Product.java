@@ -65,6 +65,18 @@ public class Product extends BaseEntity {
         this.status = Status.PREPARE;
     }
 
+    public void onSale() {
+        this.status = Status.ON_SALE;
+    }
+
+    public void reserved() {
+        this.status = Status.RESERVED;
+    }
+
+    public void completed() {
+        this.status = Status.END_OF_SALE;
+    }
+
     protected Product() {
 
     }

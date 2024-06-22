@@ -3,6 +3,8 @@ plugins {
     id 'org.springframework.boot' version '3.3.0'
     id 'io.spring.dependency-management' version '1.1.5'
 
+    id "org.asciidoctor.jvm.convert" version "3.3.2"  // (1)
+
     id 'jacoco'
     id "org.sonarqube" version "4.4.1.3373"
 }
@@ -20,6 +22,7 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+    asciidoctorExt // (2)
 }
 
 repositories {
@@ -44,11 +47,20 @@ dependencies {
             'org.projectlombok:lombok',
             'org.projectlombok:lombok-mapstruct-binding:0.1.0'
     )
+
+    // Rest docs
+    asciidoctorExt 'org.springframework.restdocs:spring-restdocs-asciidoctor' // (3)
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc' // (4)
+}
+
+ext {
+    snippetsDir = file('build/generated-snippets') // (5)
 }
 
 tasks.named('test') {
     useJUnitPlatform()
     finalizedBy jacocoTestReport  // 테스트 실행 후 항상 report가 생성됩니다.
+    outputs.dir snippetsDir // (6)
 }
 
 //jacoco start
@@ -68,6 +80,27 @@ private excludedClassFilesForReport(classDirectories) {
                 ])
             })
     )
+}
+
+asciidoctor {
+    configurations 'asciidoctorExt' // (7)
+    baseDirFollowsSourceFile() // (8)
+    inputs.dir snippetsDir // (9)
+    dependsOn test // (10)
+}
+
+asciidoctor.doFirst {
+    delete file('src/main/resources/static/docs')  // (11)
+}
+
+task copyDocument(type: Copy) { // (12)
+    dependsOn asciidoctor
+    from file("build/docs/asciidoc")
+    into file("src/main/resources/static/docs")
+}
+
+build {
+    dependsOn copyDocument
 }
 
 jacoco {
