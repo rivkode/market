@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import sample.market.domain.order.Order;
 import sample.market.domain.order.OrderService;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
+import sample.market.domain.product.ProductCommand.RetrieveReservedProductsBySeller;
 
 @Service
 @RequiredArgsConstructor
@@ -45,5 +46,12 @@ public class ProductServiceImpl implements ProductService{
         List<ProductInfo> productInfos = retrieveProductList(productIds);
 
         return productInfos;
+    }
+
+    @Override
+    public List<ProductInfo> retrieveReservedProductsBySeller(
+            RetrieveReservedProductsBySeller command) {
+        List<Product> products = productReader.getReservedProductsBySellerId(command.getSellerId());
+        return productInfoMapper.of(products);
     }
 }

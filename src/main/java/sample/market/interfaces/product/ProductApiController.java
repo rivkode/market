@@ -34,7 +34,7 @@ public class ProductApiController {
     }
 
     @GetMapping("/purchase")
-    public ResponseEntity<RetrieveResponse> retrievePurchaseProduct(@Valid @RequestBody ProductDto.RetrieveRequest request) {
+    public ResponseEntity<RetrieveResponse> retrievePurchasedProduct(@Valid @RequestBody ProductDto.RetrievePurchasedRequest request) {
         ProductCommand.RetrievePurchaseProduct command = request.toCommand();
         List<ProductInfo> productInfos = productFacade.retrievePurchasedProducts(command);
         RetrieveResponse response = new RetrieveResponse(productInfos);
@@ -42,5 +42,27 @@ public class ProductApiController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
     }
+
+    @GetMapping("/reserved/seller")
+    public ResponseEntity<RetrieveResponse> retrieveReservedProductBySeller(
+            @Valid @RequestBody ProductDto.RetrieveReservedRequestWithSeller request) {
+        ProductCommand.RetrieveReservedProductsBySeller command = request.toCommand();
+        List<ProductInfo> productInfos = productFacade.retrieveReservedProductsBySeller(command);
+        RetrieveResponse response = new RetrieveResponse(productInfos);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
+    }
+
+//    @GetMapping("/reserved/buyer")
+//    public ResponseEntity<RetrieveResponse> retrieveReservedProductByBuyer(
+//            @Valid @RequestBody ProductDto.RetrieveReservedRequestWithBuyer request) {
+//        ProductCommand.RetrieveReservedProductsByBuyer command = request.toCommand();
+//        List<ProductInfo> productInfos = productFacade.retrieveReservedProductsByBuyer(command);
+//        RetrieveResponse response = new RetrieveResponse(productInfos);
+//
+//        return ResponseEntity.status(HttpStatus.OK)
+//                .body(response);
+//    }
 
 }
