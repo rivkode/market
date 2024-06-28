@@ -42,4 +42,10 @@ public class StockServiceImpl implements StockService {
         }
     }
 
+    @Transactional
+    public void decrease(Long productId) {
+        Stock stock = stockRepository.findByProductId(productId);
+        stock.decrease();
+    }
+
 }
