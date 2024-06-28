@@ -159,4 +159,65 @@ class StockFacadeTest {
         assertThat(getStock.getQuantity()).isZero();
     }
 
+    @DisplayName("Reddision Lock - 동시에 300개의 요청으로 productId로 조회한 상품의 재고를 1씩 감소시킨다.")
+    @Test
+    void decreaseWithRedissonLock() throws InterruptedException {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        product1.reserved();
+        productStore.store(product1);
+
+        Long quantity = 300L;
+        Stock stock = Stock.builder()
+                .productId(product1.getId())
+                .quantity(quantity)
+                .build();
+        Stock savedStock = stockRepository.save(stock);
+
+        int threadCount = 300;
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(100);
+        final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+
+        // when
+        IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
+                    try {
+                        stockFacade.decreaseWithRedissonLock(product1.getId());
+                    } catch (final InterruptedException ex) {
+                        System.out.println("InterruptedException Occur");
+                        throw new RuntimeException(ex);
+                    } finally {
+                        countDownLatch.countDown();
+                    }
+                }
+        ));
+
+        countDownLatch.await();
+
+        Stock getStock = stockRepository.findById(savedStock.getId()).orElseThrow();
+
+        // then
+        assertThat(getStock.getQuantity()).isZero();
+    }
+
+
 }
