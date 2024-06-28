@@ -62,6 +62,11 @@ public class ProductDto {
                     .build();
 
         }
+
+        @Builder
+        public RetrievePurchasedRequest(Long buyerId) {
+            this.buyerId = buyerId;
+        }
     }
 
     @Getter
@@ -110,5 +115,36 @@ public class ProductDto {
             this.productInfos = productInfos;
         }
     }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PurchaseRequest {
+        @NotNull(message = "buyerId는 필수입력값입니다.")
+        private Long buyerId;
+
+
+        public ProductCommand.PurchaseProduct toCommand() {
+            return ProductCommand.PurchaseProduct.builder()
+                    .buyerId(buyerId)
+                    .build();
+
+        }
+
+    }
+
+    @Getter
+    public static class PurchaseResponse {
+        private String name;
+        private Integer price;
+        private Status status;
+
+        public PurchaseResponse(ProductInfo productInfo) {
+            this.name = productInfo.getName();
+            this.price = productInfo.getPrice();
+            this.status = productInfo.getStatus();
+        }
+
+    }
+
 
 }
