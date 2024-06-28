@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import sample.market.domain.order.Order;
+import sample.market.domain.order.OrderReader;
 import sample.market.domain.order.OrderService;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
@@ -17,7 +18,7 @@ public class ProductServiceImpl implements ProductService{
     private final ProductStore productStore;
     private final ProductReader productReader;
     private final ProductInfoMapper productInfoMapper;
-    private final OrderService orderService;
+    private final OrderReader orderReader;
 
     @Override
     public ProductInfo registerProduct(ProductCommand.RegisterProduct command) {
@@ -40,7 +41,7 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public List<ProductInfo> retrievePurchasedProducts(RetrievePurchaseProduct command) {
-        List<Order> orders = orderService.retrieveCompletedOrders(command);
+        List<Order> orders = orderReader.getCompletedProducts(command.getBuyerId());
         List<Long> productIds = orders.stream()
                 .map(Order::getProductId)
                 .collect(Collectors.toList());
@@ -58,7 +59,7 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public List<ProductInfo> retrieveReservedProductsByBuyer(RetrieveReservedProductsByBuyer command) {
-        List<Order> orders = orderService.retrieveInitOrders(command);
+        List<Order> orders = orderReader.getInitProducts(command.getBuyerId());
         List<Long> productIds = orders.stream()
                 .map(Order::getProductId)
                 .collect(Collectors.toList());
