@@ -11,6 +11,10 @@
 
 읽기 쉬운 코드로 작성합니다.
 
+# Exception 핸들링
+
+가독성과 편의를 위해 표준예외를 적극적으로 사용합니다.
+
 <br>
 
 # 요구사항
@@ -85,6 +89,22 @@
 #### [POST] /api/v1/orders
 
 > productId: 제품 Id
+
+### 제품 구매 승인
+
+#### [POST] /api/v1/orders/approve
+
+> productId: 제품 Id
+> sellerId : 구매자 Id
+> orderId : 거래 Id
+
+### 제품 구매 확정
+
+#### [POST] /api/v1/orders/complete
+
+> productId: 제품 Id
+> sellerId : 구매자 Id
+> orderId : 거래 Id
 
 <br>
 
