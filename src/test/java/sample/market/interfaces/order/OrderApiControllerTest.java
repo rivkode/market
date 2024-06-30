@@ -14,6 +14,8 @@ import sample.market.ControllerTestSupport;
 import sample.market.domain.order.Order;
 import sample.market.domain.order.OrderCommand;
 import sample.market.domain.order.OrderInfo;
+import sample.market.interfaces.order.OrderDto.ApproveRequest;
+import sample.market.interfaces.order.OrderDto.CompleteRequest;
 import sample.market.interfaces.order.OrderDto.RegisterRequest;
 
 class OrderApiControllerTest extends ControllerTestSupport {
@@ -92,5 +94,81 @@ class OrderApiControllerTest extends ControllerTestSupport {
     }
 
 
+    @DisplayName("판매자가 구매상품에 대해 판매승인을 한다.")
+    @Test
+    void approveOrder() throws Exception {
+        // given
+        long buyerId = 2L;
+        long productId = 1L;
+        int price = 1000;
+
+        Order order = Order.builder()
+                .buyerId(buyerId)
+                .productId(productId)
+                .price(price)
+                .build();
+
+        // 판매 승인
+        order.approve();
+
+        OrderDto.ApproveRequest request = ApproveRequest.builder()
+                .orderId(1L)
+                .productId(productId)
+                .sellerId(1L)
+                .build();
+
+        OrderInfo mockOrderInfo = new OrderInfo(order);
+
+        when(orderFacade.approveOrder(any(OrderCommand.ApproveOrder.class))).thenReturn(mockOrderInfo);
+
+        // when // then
+        mockMvc.perform(
+                        post("/api/v1/orders/approve")
+                                .content(objectMapper.writeValueAsString(request))
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ORDER_SALE_APPROVED"))
+        ;
+    }
+
+    @DisplayName("구매자가 구매상품에 대해 판매승인을 한다.")
+    @Test
+    void completeOrder() throws Exception {
+        // given
+        long buyerId = 2L;
+        long productId = 1L;
+        int price = 1000;
+
+        Order order = Order.builder()
+                .buyerId(buyerId)
+                .productId(productId)
+                .price(price)
+                .build();
+
+        // 판매 승인
+        order.complete();
+
+        OrderDto.CompleteRequest request = CompleteRequest.builder()
+                .orderId(1L)
+                .productId(productId)
+                .sellerId(1L)
+                .build();
+
+        OrderInfo mockOrderInfo = new OrderInfo(order);
+
+        when(orderFacade.completeOrder(any(OrderCommand.CompleteOrder.class))).thenReturn(mockOrderInfo);
+
+        // when // then
+        mockMvc.perform(
+                        post("/api/v1/orders/complete")
+                                .content(objectMapper.writeValueAsString(request))
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
 
 }

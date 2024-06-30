@@ -53,7 +53,7 @@ public class OrderServiceImpl implements OrderService {
 
         if (!command.getSellerId().equals(sellerId)) {
             throw new IllegalArgumentException(
-                    "상품 Id : " + product.getId() + "상품 판매 승인시 " + sellerId + "승인 요청 판매자의 Id와 상품의 판매자 Id가 다릅니다.");
+                    "상품 Id : " + product.getId() + "상품 판매 승인시 요청 판매자의 Id " + command.getSellerId() + "와 상품의 판매자 Id :"+ sellerId +"가 다릅니다.");
         }
 
         Order order = orderReader.getOrder(command.getOrderId());
@@ -67,7 +67,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderInfo completeOrder(CompleteOrder command) {
         Order order = orderReader.getOrder(command.getOrderId());
 
-        if (order.getStatus().equals(Status.ORDER_SALE_APPROVED)) {
+        if (!order.getStatus().equals(Status.ORDER_SALE_APPROVED)) {
             throw new IllegalStateException(
                     "거래 Id : " + order.getId() + " 거래 구매 확정시 " + order.getStatus() + " 이며 APPROVED 되지 않았습니다.");
         }

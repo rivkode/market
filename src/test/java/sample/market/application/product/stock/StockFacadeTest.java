@@ -142,9 +142,6 @@ class StockFacadeTest {
         IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
                     try {
                         stockFacade.decreaseWithOptimistic(product1.getId());
-                    } catch (final InterruptedException ex) {
-                        System.out.println("InterruptedException Occur");
-                        throw new RuntimeException(ex);
                     } finally {
                         countDownLatch.countDown();
                     }
@@ -202,9 +199,6 @@ class StockFacadeTest {
         IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
                     try {
                         stockFacade.decreaseWithRedissonLock(product1.getId());
-                    } catch (final InterruptedException ex) {
-                        System.out.println("InterruptedException Occur");
-                        throw new RuntimeException(ex);
                     } finally {
                         countDownLatch.countDown();
                     }
