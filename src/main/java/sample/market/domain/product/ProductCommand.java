@@ -45,4 +45,10 @@ public class ProductCommand {
     public static class RetrieveReservedProductsByBuyer {
         private final Long buyerId;
     }
+
+    @Getter
+    @Builder
+    public static class PurchaseProduct {
+        private final Long buyerId;
+    }
 }

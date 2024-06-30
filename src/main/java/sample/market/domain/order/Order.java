@@ -39,6 +39,7 @@ public class Order extends BaseEntity {
     public enum Status {
         INIT("거래_시작"),
         ORDER_CANCEL("거래_취소"),
+        ORDER_SALE_APPROVED("거래_판매_승인"),
         ORDER_COMPLETE("거래_완료");
 
         private final String value;
@@ -58,6 +59,10 @@ public class Order extends BaseEntity {
 
     public void cancel() {
         this.status = Status.ORDER_CANCEL;
+    }
+
+    public void approve() {
+        this.status = Status.ORDER_SALE_APPROVED;
     }
 
     public Order() {

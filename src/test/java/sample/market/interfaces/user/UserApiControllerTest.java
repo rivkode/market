@@ -11,19 +11,14 @@ import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import sample.market.ControllerTestSupport;
-import sample.market.application.user.UserFacade;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserCommand;
 import sample.market.domain.user.UserInfo;
 import sample.market.interfaces.user.UserDto.RegisterRequest;
 
 class UserApiControllerTest extends ControllerTestSupport {
-
-    @MockBean
-    private UserFacade userFacade;
 
 
     @DisplayName("신규 유저를 등록한다.")

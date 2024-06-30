@@ -1,6 +1,7 @@
 package sample.market.domain.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.List;
@@ -9,12 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import sample.market.domain.order.Order.Status;
 import sample.market.domain.product.Product;
 import sample.market.domain.product.ProductCommand;
-import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
 import sample.market.domain.product.ProductStore;
+import sample.market.domain.product.stock.Stock;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
+import sample.market.infrastructure.product.stock.StockRepository;
 
 @SpringBootTest
 @Transactional
@@ -31,6 +34,9 @@ class OrderServiceTest {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private StockRepository stockRepository;
 
     @DisplayName("상품거래가 시작되면 거래는 주문자와 상품 Id를 가진다")
     @Test
@@ -57,6 +63,12 @@ class OrderServiceTest {
                 .sellerId(seller.getId())
                 .build();
         productStore.store(product1);
+
+        Stock stock = Stock.builder()
+                .productId(product1.getId())
+                .quantity(10L)
+                .build();
+        stockRepository.save(stock);
 
         OrderCommand.RegisterOrder command = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
@@ -208,5 +220,196 @@ class OrderServiceTest {
                 );
 
     }
+
+    @DisplayName("판매자가 구매상품에 대해 판매승인을 한다.")
+    @Test
+    void approveOrder() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        Order order = Order.builder()
+                .productId(product1.getId())
+                .buyerId(buyer.getId())
+                .price(product1.getPrice())
+                .build();
+        orderStore.store(order);
+
+        OrderCommand.ApproveOrder command = OrderCommand.ApproveOrder.builder()
+                .productId(product1.getId())
+                .orderId(order.getId())
+                .sellerId(seller.getId())
+                .build();
+
+        // when
+        OrderInfo approvedOrderInfo = orderService.approveOrder(command);
+
+        // then
+        assertThat(approvedOrderInfo.getStatus()).isEqualTo(Status.ORDER_SALE_APPROVED);
+    }
+
+    @DisplayName("판매승인시 승인 요청 판매자의 Id와 상품의 판매자 Id가 다를시 예외가 발생한다.")
+    @Test
+    void approveOrderWithDifferentSellerId() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        long differentSellerId = seller.getId() + 100L;
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        Order order = Order.builder()
+                .productId(product1.getId())
+                .buyerId(buyer.getId())
+                .price(product1.getPrice())
+                .build();
+        orderStore.store(order);
+
+        OrderCommand.ApproveOrder command = OrderCommand.ApproveOrder.builder()
+                .productId(product1.getId())
+                .orderId(order.getId())
+                .sellerId(differentSellerId)
+                .build();
+
+
+        // when // then
+        assertThatThrownBy(() -> orderService.approveOrder(command))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("상품 Id : " + product1.getId() + "상품 판매 승인시 요청 판매자의 Id " + command.getSellerId() + "와 상품의 판매자 Id :"+ product1.getSellerId() +"가 다릅니다.");
+    }
+
+    @DisplayName("구매자가 구매상품에 대해 구매 확정을 한다.")
+    @Test
+    void completeOrder() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        Order order = Order.builder()
+                .productId(product1.getId())
+                .buyerId(buyer.getId())
+                .price(product1.getPrice())
+                .build();
+        // order Approved 로 상태 변경
+        order.approve();
+        orderStore.store(order);
+
+        OrderCommand.CompleteOrder command = OrderCommand.CompleteOrder.builder()
+                .productId(product1.getId())
+                .orderId(order.getId())
+                .sellerId(seller.getId())
+                .build();
+
+        // when
+        OrderInfo completedOrderInfo = orderService.completeOrder(command);
+
+        // then
+        assertThat(completedOrderInfo.getStatus()).isEqualTo(Status.ORDER_COMPLETE);
+    }
+
+    @DisplayName("구매 확정시 거래의 상태가 Approved가 아닐경우 예외가 발생 한다.")
+    @Test
+    void completeOrderWithNotApprovedStatus() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        Order order = Order.builder()
+                .productId(product1.getId())
+                .buyerId(buyer.getId())
+                .price(product1.getPrice())
+                .build();
+        // order 상태는 INIT 상태
+        orderStore.store(order);
+
+        OrderCommand.CompleteOrder command = OrderCommand.CompleteOrder.builder()
+                .productId(product1.getId())
+                .orderId(order.getId())
+                .sellerId(seller.getId())
+                .build();
+
+        // when // then
+        assertThatThrownBy(() -> orderService.completeOrder(command))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("거래 Id : " + order.getId() + " 거래 구매 확정시 " + order.getStatus() + " 이며 APPROVED 되지 않았습니다.");
+    }
+
+
+
 
 }

@@ -7,7 +7,13 @@
 
 # Hexagonal Architecture Layers
 
-헥사고날 아키텍처로 구현합니다.
+헥사고날 아키텍처로 구현합니다. 확장에 유연한 아키텍처로 설계합니다.
+
+읽기 쉬운 코드로 작성합니다.
+
+# Exception 핸들링
+
+가독성과 편의를 위해 표준예외를 적극적으로 사용합니다.
 
 <br>
 
@@ -52,12 +58,6 @@
 >
 > price: 제품 가격
 
-### 제품 구매
-
-#### [POST] /api/v1/products/purchase
-
-> productId: 제품 Id
-
 ### 제품 목록 조회
 
 #### GET /products?page={page}&size={size}
@@ -73,3 +73,49 @@
 조회자가 구매자인지, 판매자인지에 따라 응답이 달라질 수 있습니다.
 
 > productId: 제품 번호
+
+### 구매한 제품 조회
+
+#### GET /products/reserved/seller
+
+> sellerId: 판매자 Id
+
+<br>
+
+## 주문
+
+### 제품 구매
+
+#### [POST] /api/v1/orders
+
+> productId: 제품 Id
+
+### 제품 구매 승인
+
+#### [POST] /api/v1/orders/approve
+
+> productId: 제품 Id
+> sellerId : 구매자 Id
+> orderId : 거래 Id
+
+### 제품 구매 확정
+
+#### [POST] /api/v1/orders/complete
+
+> productId: 제품 Id
+> sellerId : 구매자 Id
+> orderId : 거래 Id
+
+<br>
+
+## 유저
+
+### 유저 등록
+
+#### [POST] /api/v1/users
+
+> email : 이메일
+>
+> username: 이름
+> 
+> password: 비밀번호
