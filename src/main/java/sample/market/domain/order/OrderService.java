@@ -2,6 +2,8 @@ package sample.market.domain.order;
 
 
 import java.util.List;
+import sample.market.domain.order.OrderCommand.ApproveOrder;
+import sample.market.domain.order.OrderCommand.CompleteOrder;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
 
@@ -11,4 +13,8 @@ public interface OrderService {
     List<Order> retrieveCompletedOrders(RetrievePurchaseProduct command);
 
     List<Order> retrieveInitOrders(RetrieveReservedProductsByBuyer command);
+
+    OrderInfo approveOrder(ApproveOrder command);
+
+    OrderInfo completeOrder(CompleteOrder command);
 }

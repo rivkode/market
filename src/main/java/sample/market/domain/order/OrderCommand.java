@@ -21,4 +21,19 @@ public class OrderCommand {
         }
     }
 
+    @Getter
+    @Builder
+    public static class ApproveOrder {
+        private final Long sellerId;
+        private final Long productId;
+        private final Long orderId;
+    }
+
+    @Getter
+    @Builder
+    public static class CompleteOrder {
+        private final Long sellerId;
+        private final Long productId;
+        private final Long orderId;
+    }
 }
