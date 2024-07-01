@@ -30,4 +30,9 @@ public class OrderReaderImpl implements OrderReader {
     public List<Order> getInitProducts(Long buyerId) {
         return orderRepository.findByBuyerIdAndStatus(buyerId, Status.INIT);
     }
+
+    @Override
+    public Boolean existsByProductIdAndStatusNotOrderComplete(Long productId) {
+        return orderRepository.existsByProductIdAndStatusNotOrderComplete(productId);
+    }
 }
