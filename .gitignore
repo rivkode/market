@@ -5,10 +5,15 @@ build/
 !**/src/main/**/build/
 !**/src/main/generated/
 !**/src/test/**/build/
+!.github/workflows/
 
 *.properties
 *.yaml
-*.yml
+#*.yml
+
+!**/src/main/resources/application.properties
+!**/src/main/resources/application.yml
+
 
 !develop-ci.yml
 
