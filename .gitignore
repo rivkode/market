@@ -10,6 +10,8 @@ build/
 *.yaml
 *.yml
 
+!develop-ci.yml
+
 ### STS ###
 .apt_generated
 .classpath
