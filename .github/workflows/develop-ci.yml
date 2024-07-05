@@ -47,13 +47,19 @@ jobs:
           mysql user: root # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
           mysql password: ${{ secrets.DB_PASSWORD }}
 
-      - name: yml 파일 생성
+      - name: properties 파일 생성
         run: |
           cd ./src/main
           mkdir resources
           cd ./resources
           touch ./application.properties
           echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./application.properties
+
+      - name: Verify MySQL is running
+        run: sudo netstat -tlnp | grep 3306
+
+      - name: Verify application.properties
+        run: cat ./src/main/resources/application.properties
 
         shell: bash
 
