@@ -40,11 +40,14 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: MySQL 설치
-        uses: mirromutth/mysql-action@v1
+        uses: mirromutth/mysql-action@v1.1
         with:
+          host port: 3306
+          container port: 3306
+          character set server: 'utf8' # Optional, default value is 'utf8mb4'. The '--character-set-server' option for mysqld
           mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
           mysql database: market_db # Optional, default value is "test". The specified database which will be create
-          mysql user: root # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
+          mysql user: actions # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
           mysql password: ${{ secrets.DB_PASSWORD }}
 
 #      - name: MySQL 설치
@@ -79,10 +82,16 @@ jobs:
       - name: Run chmod to make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: 어플리케이션 실행 테스트(테스트 코드X)
-        run: ./gradlew clean build --exclude-task test
+      - name: 빌드 진행
+#        run: ./gradlew clean build --exclude-task test
+        run: ./gradlew build -x test
 
-      # build Test
+      - name: Wait for MySQL
+        run: |
+          while ! mysqladmin ping --host=127.0.0.1 --password=$DB_PASSWORD --silent; do
+            sleep 1
+          done
+
       - name: 테스트 코드 실행
         run: ./gradlew --info test
 
