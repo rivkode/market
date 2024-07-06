@@ -1,9 +1,9 @@
-package sample.market.infrastructure.product.stock;
+package sample.market.infrastructure.stock;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import sample.market.domain.product.stock.Stock;
-import sample.market.domain.product.stock.StockReader;
+import sample.market.domain.stock.Stock;
+import sample.market.domain.stock.StockReader;
 
 @Component
 @RequiredArgsConstructor

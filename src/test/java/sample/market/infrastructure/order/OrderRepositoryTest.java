@@ -79,4 +79,48 @@ class OrderRepositoryTest {
                         tuple(buyer.getId(), product1.getId())
                 );
     }
+
+    @DisplayName("buyerId와 Status 조건으로 Order를 조회한다.")
+    @Test
+    void existsByProductIdAndStatusNotOrderComplete() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        Order order = Order.builder()
+                .buyerId(buyer.getId())
+                .productId(product1.getId())
+                .price(product1.getPrice())
+                .build();
+
+        // order가 complete이 아닌 approve 인 상태
+        order.approve();
+        orderStore.store(order);
+
+        // when
+        boolean existOrderComplete = orderRepository.existsByProductIdAndStatusNotOrderComplete(
+                product1.getId());
+
+        // then
+        assertThat(existOrderComplete).isTrue();
+    }
 }

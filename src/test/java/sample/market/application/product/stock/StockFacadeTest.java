@@ -10,12 +10,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import sample.market.application.stock.StockFacade;
 import sample.market.domain.product.Product;
 import sample.market.domain.product.ProductStore;
-import sample.market.domain.product.stock.Stock;
+import sample.market.domain.stock.Stock;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
-import sample.market.infrastructure.product.stock.StockRepository;
+import sample.market.infrastructure.stock.StockRepository;
 
 /**
  * 동시성 테스트 시
