@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sample.market.infrastructure.stock.StockRepository;
 
+
 @Slf4j
 @Service
 @RequiredArgsConstructor

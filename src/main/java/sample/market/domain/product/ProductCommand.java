@@ -11,6 +11,7 @@ public class ProductCommand {
         private final String name;
         private final Integer price;
         private final Long sellerId;
+        private final Long quantity;
 
         public Product toEntity() {
             return Product.builder()
