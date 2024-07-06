@@ -40,20 +40,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: MySQL 설치
-        uses: shogo82148/actions-setup-mysql@v1
-        with:
-          mysql-version: "8.0"
-          root-password: ${{ secrets.DB_PASSWORD }}
-
 #      - name: MySQL 설치
-#        uses: mirromutth/mysql-action@v1
+#        uses: shogo82148/actions-setup-mysql@v1
 #        with:
-##          character set server: 'utf8' # Optional, default value is 'utf8mb4'. The '--character-set-server' option for mysqld
-#          mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
-#          mysql database: market_db # Optional, default value is "test". The specified database which will be create
-#          mysql user: actions # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
-#          mysql password: ${{ secrets.DB_PASSWORD }}
+#          mysql-version: "8.0"
+#          root-password: ${{ secrets.DB_PASSWORD }}
+
+      - name: MySQL 설치
+        uses: mirromutth/mysql-action@v1
+        with:
+#          character set server: 'utf8' # Optional, default value is 'utf8mb4'. The '--character-set-server' option for mysqld
+          mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
+          mysql database: market_db # Optional, default value is "test". The specified database which will be create
+          mysql user: rivkode # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
+          mysql password: ${{ secrets.DB_PASSWORD }}
 
 #      - name: MySQL 설치
 ##        uses: stamina/mysql-action@v1
@@ -75,13 +75,12 @@ jobs:
           touch ./application.properties
           echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./application.properties
 
-#      - name: Verify MySQL is running
-#        run: sudo netstat -tlnp | grep 3306
-
       - name: Verify application.properties
         run: cat ./src/main/resources/application.properties
-
         shell: bash
+
+      - name: Verify MySQL is running
+        run: sudo netstat -tlnp | grep 3306
 
       # gradle 실행 허가
       - name: Run chmod to make gradlew executable
