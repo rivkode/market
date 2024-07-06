@@ -14,10 +14,12 @@ import sample.market.domain.order.Order.Status;
 import sample.market.domain.product.Product;
 import sample.market.domain.product.ProductCommand;
 import sample.market.domain.product.ProductStore;
-import sample.market.domain.product.stock.Stock;
+import sample.market.domain.stock.Stock;
+import sample.market.domain.stock.StockReader;
+import sample.market.domain.stock.StockStore;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
-import sample.market.infrastructure.product.stock.StockRepository;
+
 
 @SpringBootTest
 @Transactional
@@ -36,11 +38,14 @@ class OrderServiceTest {
     private OrderService orderService;
 
     @Autowired
-    private StockRepository stockRepository;
+    private StockStore stockStore;
+
+    @Autowired
+    private StockReader stockReader;
 
     @DisplayName("상품거래가 시작되면 거래는 주문자와 상품 Id를 가진다")
     @Test
-    void store() {
+    void registerOrder() {
         // given
         User seller = User.builder()
                 .email("email@email.com")
@@ -68,7 +73,7 @@ class OrderServiceTest {
                 .productId(product1.getId())
                 .quantity(10L)
                 .build();
-        stockRepository.save(stock);
+        stockStore.store(stock);
 
         OrderCommand.RegisterOrder command = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
@@ -247,6 +252,12 @@ class OrderServiceTest {
                 .build();
         productStore.store(product1);
 
+        Stock stock = Stock.builder()
+                .productId(product1.getId())
+                .quantity(100L)
+                .build();
+        stockStore.store(stock);
+
         Order order = Order.builder()
                 .productId(product1.getId())
                 .buyerId(buyer.getId())
@@ -341,6 +352,12 @@ class OrderServiceTest {
                 .build();
         productStore.store(product1);
 
+        Stock stock = Stock.builder()
+                .productId(product1.getId())
+                .quantity(100L)
+                .build();
+        stockStore.store(stock);
+
         Order order = Order.builder()
                 .productId(product1.getId())
                 .buyerId(buyer.getId())
@@ -409,7 +426,191 @@ class OrderServiceTest {
                 .hasMessage("거래 Id : " + order.getId() + " 거래 구매 확정시 " + order.getStatus() + " 이며 APPROVED 되지 않았습니다.");
     }
 
+    @DisplayName("남은 수량이 0이며 OrderComplete가 아닌 Order가 1개 이상일경우 Product 상태는 예약중이다.")
+    @Test
+    void registerOrderByProductReserve() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        // quantity는 2이며 Order의 하나는 complete, 하나는 approve 인 상황을 가정한다
+        Stock stock = Stock.builder()
+                .productId(product1.getId())
+                .quantity(2L)
+                .build();
+        stockStore.store(stock);
+
+        OrderCommand.RegisterOrder command1 = OrderCommand.RegisterOrder.builder()
+                .buyerId(buyer.getId())
+                .productId(product1.getId())
+                .price(product1.getPrice())
+                .build();
 
 
 
+        OrderCommand.RegisterOrder command2 = OrderCommand.RegisterOrder.builder()
+                .buyerId(buyer.getId())
+                .productId(product1.getId())
+                .price(product1.getPrice())
+                .build();
+
+        // approve 상태가 하나 존재하므로 product 상태는 예약중이다.
+        // when
+        // 거래 등록
+        OrderInfo orderInfo = orderService.registerOrder(command1);
+
+        OrderCommand.ApproveOrder approveCommand = OrderCommand.ApproveOrder.builder()
+                .productId(product1.getId())
+                .orderId(orderInfo.getOrderId())
+                .sellerId(seller.getId())
+                .build();
+
+        // 거래 승인
+        orderService.approveOrder(approveCommand);
+
+        // 거래 등록
+        OrderInfo orderInfo1 = orderService.registerOrder(command2);
+
+        OrderCommand.ApproveOrder approveCommand1 = OrderCommand.ApproveOrder.builder()
+                .productId(product1.getId())
+                .orderId(orderInfo1.getOrderId())
+                .sellerId(seller.getId())
+                .build();
+
+        // 거래 승인
+        orderService.approveOrder(approveCommand1);
+
+        OrderCommand.CompleteOrder completeCommand = OrderCommand.CompleteOrder.builder()
+                .productId(product1.getId())
+                .orderId(orderInfo1.getOrderId())
+                .sellerId(seller.getId())
+                .build();
+
+        // 거래 완료
+        orderService.completeOrder(completeCommand);
+
+        Stock getStock = stockReader.getStockByProductId(product1.getId());
+
+
+        // then
+        assertThat(getStock.getQuantity()).isZero();
+        assertThat(product1.getStatus()).isEqualTo(Product.Status.RESERVED);
+    }
+
+    @DisplayName("남은 수량이 0이며 모든 Order가 Complete일 경우 Product 상태는 완료이다.")
+    @Test
+    void registerOrderByProductComplete() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        // quantity는 2이며 Order의 하나는 complete, 하나는 approve 인 상황을 가정한다
+        Stock stock = Stock.builder()
+                .productId(product1.getId())
+                .quantity(2L)
+                .build();
+        stockStore.store(stock);
+
+        OrderCommand.RegisterOrder command1 = OrderCommand.RegisterOrder.builder()
+                .buyerId(buyer.getId())
+                .productId(product1.getId())
+                .price(product1.getPrice())
+                .build();
+
+
+
+        OrderCommand.RegisterOrder command2 = OrderCommand.RegisterOrder.builder()
+                .buyerId(buyer.getId())
+                .productId(product1.getId())
+                .price(product1.getPrice())
+                .build();
+
+        // approve 상태가 하나 존재하므로 product 상태는 예약중이다.
+        // when
+        // 거래 등록
+        OrderInfo orderInfo = orderService.registerOrder(command1);
+
+        OrderCommand.ApproveOrder approveCommand = OrderCommand.ApproveOrder.builder()
+                .productId(product1.getId())
+                .orderId(orderInfo.getOrderId())
+                .sellerId(seller.getId())
+                .build();
+
+        // 거래 승인
+        orderService.approveOrder(approveCommand);
+
+        OrderCommand.CompleteOrder completeCommand = OrderCommand.CompleteOrder.builder()
+                .productId(product1.getId())
+                .orderId(orderInfo.getOrderId())
+                .sellerId(seller.getId())
+                .build();
+
+        // 거래 완료
+        orderService.completeOrder(completeCommand);
+
+        // 거래 등록
+        OrderInfo orderInfo1 = orderService.registerOrder(command2);
+
+        OrderCommand.ApproveOrder approveCommand1 = OrderCommand.ApproveOrder.builder()
+                .productId(product1.getId())
+                .orderId(orderInfo1.getOrderId())
+                .sellerId(seller.getId())
+                .build();
+
+        // 거래 승인
+        orderService.approveOrder(approveCommand1);
+
+        OrderCommand.CompleteOrder completeCommand1 = OrderCommand.CompleteOrder.builder()
+                .productId(product1.getId())
+                .orderId(orderInfo1.getOrderId())
+                .sellerId(seller.getId())
+                .build();
+
+        // 거래 완료
+        orderService.completeOrder(completeCommand1);
+        Stock getStock = stockReader.getStockByProductId(product1.getId());
+
+
+        // then
+        assertThat(getStock.getQuantity()).isZero();
+        assertThat(product1.getStatus()).isEqualTo(Product.Status.END_OF_SALE);
+    }
 }
