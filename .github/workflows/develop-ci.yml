@@ -18,7 +18,8 @@ jobs:
     steps:
 
       - name: 레포지토리 체크아웃
-        uses: actions/checkout@v3
+#        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 기본 MySQL 종료 (SUDO 필요)
         run: sudo service mysql stop # 기본 MySQL 종료
@@ -40,13 +41,19 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: MySQL 설치
-        uses: mirromutth/mysql-action@v1
+        uses: shogo82148/actions-setup-mysql@v1
         with:
-#          character set server: 'utf8' # Optional, default value is 'utf8mb4'. The '--character-set-server' option for mysqld
-          mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
-          mysql database: market_db # Optional, default value is "test". The specified database which will be create
-          mysql user: actions # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
-          mysql password: ${{ secrets.DB_PASSWORD }}
+          mysql-version: "8.0"
+          root-password: ${{ secrets.DB_PASSWORD }}
+
+#      - name: MySQL 설치
+#        uses: mirromutth/mysql-action@v1
+#        with:
+##          character set server: 'utf8' # Optional, default value is 'utf8mb4'. The '--character-set-server' option for mysqld
+#          mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
+#          mysql database: market_db # Optional, default value is "test". The specified database which will be create
+#          mysql user: actions # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
+#          mysql password: ${{ secrets.DB_PASSWORD }}
 
 #      - name: MySQL 설치
 ##        uses: stamina/mysql-action@v1
