@@ -1,4 +1,4 @@
-package sample.market.application.product.stock;
+package sample.market.application.stock;
 
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
-import sample.market.domain.product.stock.StockService;
+import sample.market.domain.stock.StockService;
 
 @Slf4j
 @Service
@@ -57,21 +57,6 @@ public class StockFacade {
         }
 
         throw new RuntimeException("Max retries reached for optimistic locking");
-
-//        while (true) {
-//            try {
-//                stockService.decreaseWithOptimistic(productId);
-//                break;
-//            } catch (final Exception ex) {
-//                log.info("### optimistic lock version 충돌");
-//                try {
-//                    Thread.sleep(50);
-//                } catch (InterruptedException e) {
-//                    Thread.currentThread().interrupt(); // 인터럽트 상태를 다시 설정
-//                    throw new RuntimeException("Thread was interrupted", e);
-//                }
-//            }
-//        }
     }
 
     public void decreaseWithPessimistic(Long productId) {

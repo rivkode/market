@@ -1,4 +1,4 @@
-package sample.market.domain.product.stock;
+package sample.market.domain.stock;
 
 
 public interface StockService {

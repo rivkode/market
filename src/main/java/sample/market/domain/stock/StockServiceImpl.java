@@ -1,10 +1,10 @@
-package sample.market.domain.product.stock;
+package sample.market.domain.stock;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sample.market.infrastructure.product.stock.StockRepository;
+import sample.market.infrastructure.stock.StockRepository;
 
 @Slf4j
 @Service

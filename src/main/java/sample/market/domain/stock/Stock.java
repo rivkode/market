@@ -1,4 +1,4 @@
-package sample.market.domain.product.stock;
+package sample.market.domain.stock;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
