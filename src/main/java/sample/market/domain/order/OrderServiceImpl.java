@@ -4,7 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import sample.market.application.product.stock.StockFacade;
+import sample.market.application.stock.StockFacade;
 import sample.market.domain.order.Order.Status;
 import sample.market.domain.order.OrderCommand.ApproveOrder;
 import sample.market.domain.order.OrderCommand.CompleteOrder;
@@ -30,16 +30,6 @@ public class OrderServiceImpl implements OrderService {
         Order initOrder = command.toEntity();
         Order order = orderStore.store(initOrder);
         stockFacade.decreaseWithRedissonLock(command.getProductId());
-        // 수량 체크 후 상품에 대한 상태 변경
-
-        productManager.updateProductStatus(order.getProductId());
-//        Product product = productReader.getProduct();
-//        Stock stock = stockReader.getStockByProductId(order.getProductId());
-//        Long productQuantity = stock.getQuantity();
-
-        // Order의 상태 중 하나라도 거래 완료가 아닌지를 체크하기 위해 해당 Product의 Order들의 상태 리스트를 가져와야 한다.
-        // 만약 하나라도 거래 완료가 아닌 것이 존재한다면 true 아니면 false
-//        extracted(product, productQuantity);
 
         return new OrderInfo(order);
     }
@@ -72,6 +62,9 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderReader.getOrder(command.getOrderId());
         order.approve();
 
+        productManager.updateProductStatus(order.getProductId());
+
+
         return new OrderInfo(order);
     }
 
@@ -85,6 +78,8 @@ public class OrderServiceImpl implements OrderService {
                     "거래 Id : " + order.getId() + " 거래 구매 확정시 " + order.getStatus() + " 이며 APPROVED 되지 않았습니다.");
         }
         order.complete();
+
+        productManager.updateProductStatus(order.getProductId());
 
         return new OrderInfo(order);
     }
