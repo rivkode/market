@@ -7,11 +7,51 @@
 
 # Architecture Layers
 
-확장에 유연한 아키텍처로 설계합니다.
+Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 유연한 아키텍처로 설계합니다.
 
 간결하고 읽기 쉬운 코드로 작성합니다.
 
 책임과 역할을 잘 구분합니다.
+
+<br>
+
+**Layer 간 참조 관계**
+- **application**과 **infrastructure** 는 **domain Layer** 를 바라보게 하고 양방향 참조는 허용하지 않습니다.
+
+<br>
+
+**Application Layer**
+- **transaction으로 묶여야 하는** 도메인 로직과 그렇지 않는 로직을 구분합니다.
+- 예를 들어 **회원가입** 후 **회원가입 성공 이메일 발송**의 경우 이메일 발송인 외부 서비스 call은 회원가입 도메인 로직에 포함되지 
+  않으므로 **transaction에서 분리**시키며 **회원가입 도메인 로직**은 **외부 서비스 call 성공 / 실패 여부**에 대해 크게 **민감하지 않게 처리**된다.
+
+<br>
+
+**Domain Layer**
+- **domain Layer**는 **low level**의 기술에 관계없이 **독립적으로 존재**합니다.
+- **domain layer** 에서는 도메인 **로직의 흐름을 표현**하고 구현하는 Service
+  와 ServiceImpl 이 있지만 그 외의 상세한 구현은 Reader, Store, Executor
+  같은 **interface 를 선언**하여 사용하고 이에 대한 **실제 구현체는
+  Infrastructure layer** 에 두고 활용합니다.
+
+<br>
+
+**Infrastructure Layer**
+- domain layer 에 선언되고 사용되는 추상화된 interface 를 실제로 구현하여 runtime
+  시에는 실제 로직이 동작합니다.
+- Service 간의 참조 관계는 막았지만, Infrastructure layer 에서의 구현체 간에는 참조
+  관계를 허용합니다.
+
+<br>
+
+**Interfaces Layer**
+- API 를 설계할 때에는 없어도 되는 Request Parameter 는 제거하고, 외부에 리턴하
+  는 Response 도 최소한을 유지하도록 노력합니다.
+- http, gRPC, 비동기 메시징과 같은 서비스간 통신 기술은 Interfaces layer 에서만 사
+  용되도록 합니다.
+
+<br>
+
 
 **Interfaces**
 
@@ -41,7 +81,7 @@
 - xxRepository
 - xxStoreImpl
 
-
+<br>
 
 # Exception 핸들링
 
@@ -81,12 +121,15 @@
 - "구매한 용품"과 "예약중인 용품" 목록의 정보에서 구매하기 당시의 가격 정보가 나타나야합니다. 
     - 예) 구매자 A가 구매하기 요청한 당시의 제품 B의 가격이 3000원이었고 이후에 4000원으로 바뀌었다 하더라도 목록에서는 3000원으로 나타나야합니다.
 
+<br>
 
 # 공통
 
 구매취소는 고려하지 않습니다.
 검증이 필요한 부분에 대해 테스트코드를 작성해주세요.
 작성한 API에 대한 명세를 작성해주세요.
+
+<br>
 
 # API 명세
 
