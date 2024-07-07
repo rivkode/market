@@ -58,37 +58,35 @@
 >
 > price: 제품 가격
 
-### 제품 목록 조회
-
-#### GET /products?page={page}&size={size}
-
-> page: 페이지 번호, optional
->
-> size: 한 페이지의 데이터 개수, optional
-
-### 제품 상세 조회
-
-#### GET /products/{productId}
-
-조회자가 구매자인지, 판매자인지에 따라 응답이 달라질 수 있습니다.
-
-> productId: 제품 번호
-
 ### 구매한 제품 조회
+
+#### GET /products/purchase
+
+> buyerId: 구매자 Id
+
+### 예약한 제품 판매자가 조회
 
 #### GET /products/reserved/seller
 
 > sellerId: 판매자 Id
 
+### 예약한 제품 구매자가 조회
+
+#### GET /products/reserved/buyer
+
+> buyerId: 구매자 Id
+
 <br>
 
 ## 주문
 
-### 제품 구매
+### 주문 등록
 
 #### [POST] /api/v1/orders
 
-> productId: 제품 Id
+> buyerId: 구매자 Id
+> productId: 상품 Id
+> price: 가격
 
 ### 제품 구매 승인
 
