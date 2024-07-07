@@ -1,19 +1,61 @@
-# 설명
+# Market API
 
 사용자간 거래가 가능한 Wanted Market API를 생성해야합니다. 요구사항에 맞춰 진행해주세요. 요구사항은 공통과 1단계(필수), 2단계(선택) 로 나누어져 있습니다.
 
 공통과 1단계는 필수로 진행해주시고, 2단계는 1단계를 마무리한 이후에 순차적으로 진행하시는 것을 추천합니다. 스프린트를 진행하면서 기능이 어떻게 발전해나가는지 사전 과제를 통해서 경험해봅니다.
 
 
-# Hexagonal Architecture Layers
+# Architecture Layers
 
-헥사고날 아키텍처로 구현합니다. 확장에 유연한 아키텍처로 설계합니다.
+확장에 유연한 아키텍처로 설계합니다.
 
-읽기 쉬운 코드로 작성합니다.
+간결하고 읽기 쉬운 코드로 작성합니다.
+
+책임과 역할을 잘 구분합니다.
+
+**Interfaces**
+
+- xxApiController
+- xxDto
+
+**Application Layer**
+
+- xxFacade
+
+**Domain Layer**
+
+- Entity
+- xxService
+- xxServiceImpl
+- xxReader
+- xxStore
+- xxCommand
+- xxInfo
+- xxManager
+- xxManagerImpl
+- xxMapper
+
+**Infrastructure**
+
+- xxReaderImpl
+- xxRepository
+- xxStoreImpl
+
+
 
 # Exception 핸들링
 
-가독성과 편의를 위해 표준예외를 적극적으로 사용합니다.
+가독성과 편의를 위해 표준예외를 사용합니다.
+
+- 잘못된 인자 입력시 IllegalArgumentException 을 반환합니다.
+- 잘못된 상태일 경우 IllegalStateException 를 반환합니다.
+
+시스템 예외 상황 (집중 모니터링 처리) 와 비즈니스 로직 에러 상황을 `GlobalControllerAdvice` 에서 구분하여 처리합니다.
+
+- 시스템 예외 / http status : 500 AND result : FAIL
+- 비즈니스 로직 에러 / http status : 200 AND result : FAIL
+- 잘못된 인자 입력 예외 / http status : 400 AND result : FAIL
+
 
 <br>
 
