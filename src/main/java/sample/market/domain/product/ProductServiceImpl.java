@@ -56,16 +56,18 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public List<ProductInfo> retrieveReservedProductsBySeller(
             RetrieveReservedProductsBySeller command) {
+        // 구매할 당시의 가격 정보
         List<Product> products = productReader.getReservedProductsBySellerId(command.getSellerId());
         return productInfoMapper.of(products);
     }
 
     @Override
     public List<ProductInfo> retrieveReservedProductsByBuyer(RetrieveReservedProductsByBuyer command) {
+        // 구매할 당시의 가격 정보
         List<Order> orders = orderReader.getInitProducts(command.getBuyerId());
         List<Long> productIds = orders.stream()
                 .map(Order::getProductId)
-                .collect(Collectors.toList());
+                .toList();
         List<Product> products = productReader.getReservedProductsByIds(productIds);
         return productInfoMapper.of(products);
     }
