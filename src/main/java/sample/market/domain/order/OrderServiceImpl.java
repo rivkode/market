@@ -8,6 +8,7 @@ import sample.market.application.stock.StockFacade;
 import sample.market.domain.order.Order.Status;
 import sample.market.domain.order.OrderCommand.ApproveOrder;
 import sample.market.domain.order.OrderCommand.CompleteOrder;
+import sample.market.domain.order.OrderCommand.ReserveOrder;
 import sample.market.domain.product.Product;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
@@ -27,7 +28,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderInfo registerOrder(OrderCommand.RegisterOrder command) {
-        Order initOrder = command.toEntity();
+        Integer price = productReader.getProduct(command.getProductId()).getPrice();
+        Order initOrder = command.toEntity(price);
         Order order = orderStore.store(initOrder);
         stockFacade.decreaseWithRedissonLock(command.getProductId());
 
@@ -37,14 +39,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public List<Order> retrieveCompletedOrders(RetrievePurchaseProduct command) {
-        List<Order> orders = orderReader.getCompletedProducts(command.getBuyerId());
+        List<Order> orders = orderReader.getOrdersComplete(command.getBuyerId());
         return orders;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Order> retrieveInitOrders(RetrieveReservedProductsByBuyer command) {
-        List<Order> orders = orderReader.getInitProducts(command.getBuyerId());
+        List<Order> orders = orderReader.getOrdersInit(command.getBuyerId());
         return orders;
     }
 
@@ -78,6 +80,21 @@ public class OrderServiceImpl implements OrderService {
                     "거래 Id : " + order.getId() + " 거래 구매 확정시 " + order.getStatus() + " 이며 APPROVED 되지 않았습니다.");
         }
         order.complete();
+
+        productManager.updateProductStatus(order.getProductId());
+
+        return new OrderInfo(order);
+    }
+
+    @Override
+    public OrderInfo reserveOrder(ReserveOrder command) {
+        Order order = orderReader.getOrder(command.getOrderId());
+
+        if (!order.getStatus().equals(Status.ORDER_SALE_APPROVED)) {
+            throw new IllegalStateException(
+                    "거래 Id : " + order.getId() + " 거래 구매 확정시 " + order.getStatus() + " 이며 APPROVED 되지 않았습니다.");
+        }
+        order.reserve();
 
         productManager.updateProductStatus(order.getProductId());
 

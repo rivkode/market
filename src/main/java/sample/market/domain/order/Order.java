@@ -22,10 +22,10 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "buyerId")
+    @Column(name = "buyer_id")
     private Long buyerId;
 
-    @Column(name = "productId")
+    @Column(name = "product_id")
     private Long productId;
 
     private Integer price;
@@ -40,6 +40,7 @@ public class Order extends BaseEntity {
         INIT("거래_시작"),
         ORDER_CANCEL("거래_취소"),
         ORDER_SALE_APPROVED("거래_판매_승인"),
+        ORDER_RESERVE("거래_예약"),
         ORDER_COMPLETE("거래_완료");
 
         private final String value;
@@ -63,6 +64,10 @@ public class Order extends BaseEntity {
 
     public void approve() {
         this.status = Status.ORDER_SALE_APPROVED;
+    }
+
+    public void reserve() {
+        this.status = Status.ORDER_RESERVE;
     }
 
     public Order() {

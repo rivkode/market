@@ -4,6 +4,7 @@ package sample.market.domain.order;
 import java.util.List;
 import sample.market.domain.order.OrderCommand.ApproveOrder;
 import sample.market.domain.order.OrderCommand.CompleteOrder;
+import sample.market.domain.order.OrderCommand.ReserveOrder;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
 
@@ -17,4 +18,6 @@ public interface OrderService {
     OrderInfo approveOrder(ApproveOrder command);
 
     OrderInfo completeOrder(CompleteOrder command);
+
+    OrderInfo reserveOrder(ReserveOrder command);
 }

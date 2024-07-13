@@ -1,8 +1,8 @@
 package sample.market.domain.product;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import sample.market.domain.order.Order;
 import sample.market.domain.order.OrderReader;
@@ -10,8 +10,8 @@ import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsBySeller;
 import sample.market.domain.stock.StockManager;
-import sample.market.domain.stock.StockStore;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService{
@@ -44,11 +44,15 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public List<ProductInfo> retrievePurchasedProducts(RetrievePurchaseProduct command) {
-        List<Order> orders = orderReader.getCompletedProducts(command.getBuyerId());
+        List<Order> orders = orderReader.getOrdersComplete(command.getBuyerId());
+        List<Integer> prices = orders.stream()
+                .map(Order::getPrice)
+                .toList();
         List<Long> productIds = orders.stream()
                 .map(Order::getProductId)
-                .collect(Collectors.toList());
-        List<ProductInfo> productInfos = retrieveProductList(productIds);
+                .toList();
+        List<Product> products = productReader.getProductListByIds(productIds);
+        List<ProductInfo> productInfos = productInfoMapper.toProductInfos(products, prices);
 
         return productInfos;
     }
@@ -56,19 +60,21 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public List<ProductInfo> retrieveReservedProductsBySeller(
             RetrieveReservedProductsBySeller command) {
-        // 구매할 당시의 가격 정보
         List<Product> products = productReader.getReservedProductsBySellerId(command.getSellerId());
         return productInfoMapper.of(products);
     }
 
     @Override
     public List<ProductInfo> retrieveReservedProductsByBuyer(RetrieveReservedProductsByBuyer command) {
-        // 구매할 당시의 가격 정보
-        List<Order> orders = orderReader.getInitProducts(command.getBuyerId());
+        List<Order> orders = orderReader.getOrdersReserve(command.getBuyerId());
+        List<Integer> prices = orders.stream()
+                .map(Order::getPrice)
+                .toList();
         List<Long> productIds = orders.stream()
                 .map(Order::getProductId)
                 .toList();
         List<Product> products = productReader.getReservedProductsByIds(productIds);
-        return productInfoMapper.of(products);
+        List<ProductInfo> productInfos = productInfoMapper.toProductInfos(products, prices);
+        return productInfos;
     }
 }

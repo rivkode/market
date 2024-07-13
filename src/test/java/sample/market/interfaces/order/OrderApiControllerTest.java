@@ -36,7 +36,6 @@ class OrderApiControllerTest extends ControllerTestSupport {
 
         OrderDto.RegisterRequest request = RegisterRequest.builder()
                 .buyerId(buyerId)
-                .price(price)
                 .productId(productId)
                 .build();
 
@@ -72,7 +71,6 @@ class OrderApiControllerTest extends ControllerTestSupport {
 
         OrderDto.RegisterRequest request = RegisterRequest.builder()
                 .buyerId(buyerId)
-                .price(price)
                 .productId(null)
                 .build();
 
