@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import sample.market.domain.order.Order;
+import sample.market.domain.order.OrderStore;
 import sample.market.domain.product.Product;
 import sample.market.domain.product.Product.Status;
 import sample.market.domain.product.ProductStore;
@@ -27,6 +29,9 @@ class ProductRepositoryTest {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private OrderStore orderStore;
 
     @DisplayName("상품 id 리스트로 상품을 조회한다.")
     @Test
@@ -143,6 +148,53 @@ class ProductRepositoryTest {
                 .extracting("sellerId", "name", "price")
                 .containsExactlyInAnyOrder(
                         tuple(seller.getId(), product1.getName(), product1.getPrice())
+                );
+    }
+
+
+    @DisplayName("판매자가 예약된 상품을 조회합니다..")
+    @Test
+    void findProductInfoJoinedOrderBySellerId() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product1 = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product1);
+
+        Order order = Order.builder()
+                .productId(product1.getId())
+                .price(1000)
+                .buyerId(buyer.getId())
+                .build();
+        order.reserve();
+        orderStore.store(order);
+
+
+        // when
+        List<Product> products = productRepository.findProductInfoJoinedOrderBySellerId(seller.getId());
+
+        // then
+        assertThat(products).hasSize(1)
+                .extracting("id", "name", "price", "status", "sellerId")
+                .containsExactlyInAnyOrder(
+                        tuple(products.get(0).getId(), products.get(0).getName(), products.get(0).getPrice(), products.get(0).getStatus(), products.get(0).getSellerId())
                 );
     }
 

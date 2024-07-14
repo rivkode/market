@@ -78,7 +78,6 @@ class OrderServiceTest {
         OrderCommand.RegisterOrder command = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product1.getId())
-                .price(product1.getPrice())
                 .build();
 
         // when
@@ -130,17 +129,15 @@ class OrderServiceTest {
         OrderCommand.RegisterOrder orderCommand1 = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product1.getId())
-                .price(product1.getPrice())
                 .build();
 
         OrderCommand.RegisterOrder orderCommand2 = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product2.getId())
-                .price(product2.getPrice())
                 .build();
 
-        Order order1 = orderCommand1.toEntity();
-        Order order2 = orderCommand2.toEntity();
+        Order order1 = orderCommand1.toEntity(product1.getPrice());
+        Order order2 = orderCommand2.toEntity(product2.getPrice());
 
         order1.complete();
         order2.complete();
@@ -198,17 +195,15 @@ class OrderServiceTest {
         OrderCommand.RegisterOrder orderCommand1 = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product1.getId())
-                .price(product1.getPrice())
                 .build();
 
         OrderCommand.RegisterOrder orderCommand2 = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product2.getId())
-                .price(product2.getPrice())
                 .build();
 
-        Order order1 = orderCommand1.toEntity();
-        Order order2 = orderCommand2.toEntity();
+        Order order1 = orderCommand1.toEntity(product1.getPrice());
+        Order order2 = orderCommand2.toEntity(product2.getPrice());
 
         orderStore.store(order1);
         orderStore.store(order2);
@@ -462,7 +457,6 @@ class OrderServiceTest {
         OrderCommand.RegisterOrder command1 = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product1.getId())
-                .price(product1.getPrice())
                 .build();
 
 
@@ -470,7 +464,6 @@ class OrderServiceTest {
         OrderCommand.RegisterOrder command2 = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product1.getId())
-                .price(product1.getPrice())
                 .build();
 
         // approve 상태가 하나 존재하므로 product 상태는 예약중이다.
@@ -552,7 +545,6 @@ class OrderServiceTest {
         OrderCommand.RegisterOrder command1 = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product1.getId())
-                .price(product1.getPrice())
                 .build();
 
 
@@ -560,7 +552,6 @@ class OrderServiceTest {
         OrderCommand.RegisterOrder command2 = OrderCommand.RegisterOrder.builder()
                 .buyerId(buyer.getId())
                 .productId(product1.getId())
-                .price(product1.getPrice())
                 .build();
 
         // approve 상태가 하나 존재하므로 product 상태는 예약중이다.

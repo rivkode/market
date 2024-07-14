@@ -73,7 +73,7 @@ public class ProductServiceImpl implements ProductService{
         List<Long> productIds = orders.stream()
                 .map(Order::getProductId)
                 .toList();
-        List<Product> products = productReader.getReservedProductsByIds(productIds);
+        List<Product> products = productReader.getProductListByIds(productIds);
         List<ProductInfo> productInfos = productInfoMapper.toProductInfos(products, prices);
         return productInfos;
     }
