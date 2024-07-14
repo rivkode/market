@@ -133,9 +133,9 @@ class ProductServiceTest {
         assertThat(productInfo.getPrice()).isEqualTo(product1.getPrice());
     }
 
-    @DisplayName("sellerId와 status로 상품을 조회한다.")
+    @DisplayName("구매 상품 조회시 구매시 가격을 나타냅니다.")
     @Test
-    void retrieveReservedProductsBySeller() {
+    void retrievePurchasedProducts() {
         // given
         User seller = User.builder()
                 .email("email@email.com")
@@ -143,28 +143,49 @@ class ProductServiceTest {
                 .role("user")
                 .username("username")
                 .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("buyer")
+                .build();
         userStore.store(seller);
+        userStore.store(buyer);
+
+        int originalPrice = 1000;
+        int changePrice = 2000;
 
         Product product1 = Product.builder()
-                .price(1000)
+                .price(originalPrice)
                 .name("마스크")
                 .sellerId(seller.getId())
                 .build();
         product1.reserved();
         productStore.store(product1);
 
-        ProductCommand.RetrieveReservedProductsBySeller command = ProductCommand.RetrieveReservedProductsBySeller.builder()
-                .sellerId(seller.getId())
+        Order order = Order.builder()
+                .price(originalPrice)
+                .productId(product1.getId())
+                .buyerId(buyer.getId())
+                .build();
+        order.complete();
+        orderStore.store(order);
+
+        ProductCommand.RetrievePurchaseProduct command = ProductCommand.RetrievePurchaseProduct.builder()
+                .buyerId(buyer.getId())
                 .build();
 
         // when
-        List<ProductInfo> productInfos = productService.retrieveReservedProductsBySeller(command);
+        product1.changePrice(changePrice);
+        productStore.store(product1);
+
+        List<ProductInfo> productInfos = productService.retrievePurchasedProducts(command);
 
         // then
         assertThat(productInfos).hasSize(1)
-                .extracting("sellerId", "name", "price", "status")
+                .extracting("name", "purchasePrice")
                 .containsExactlyInAnyOrder(
-                        tuple(seller.getId(), product1.getName(), product1.getPrice(), product1.getStatus())
+                        tuple(product1.getName(), originalPrice)
                 );
     }
 
@@ -187,19 +208,20 @@ class ProductServiceTest {
         userStore.store(seller);
         userStore.store(buyer);
 
+        int originalPrice = 1000;
+        int changePrice = 2000;
+
         Product product1 = Product.builder()
-                .price(1000)
+                .price(originalPrice)
                 .name("마스크")
                 .sellerId(seller.getId())
                 .build();
 
         Product product2 = Product.builder()
-                .price(3000)
+                .price(originalPrice)
                 .name("충전기")
                 .sellerId(seller.getId())
                 .build();
-        product1.reserved();
-        product2.reserved();
         productStore.storeAll(List.of(product1, product2));
 
         Order order1 = Order.builder()
@@ -213,6 +235,8 @@ class ProductServiceTest {
                 .productId(product2.getId())
                 .price(product2.getPrice())
                 .build();
+        order1.reserve();
+        order2.reserve();
         orderStore.store(order1);
         orderStore.store(order2);
 
@@ -221,14 +245,17 @@ class ProductServiceTest {
                 .build();
 
         // when
+        product1.changePrice(changePrice);
+        productStore.store(product1);
+
         List<ProductInfo> productInfos = productService.retrieveReservedProductsByBuyer(command);
 
         // then
         assertThat(productInfos).hasSize(2)
-                .extracting("sellerId", "name", "price", "status")
+                .extracting("name", "purchasePrice")
                 .containsExactlyInAnyOrder(
-                        tuple(seller.getId(), product1.getName(), product1.getPrice(), product1.getStatus()),
-                        tuple(seller.getId(), product2.getName(), product2.getPrice(), product2.getStatus())
+                        tuple(product1.getName(), originalPrice),
+                        tuple(product2.getName(), originalPrice)
                 );
     }
 

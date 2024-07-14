@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import sample.market.domain.order.Order;
+import sample.market.domain.order.OrderStore;
 import sample.market.domain.product.Product.Status;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
@@ -24,6 +26,9 @@ class ProductReaderTest {
 
     @Autowired
     private ProductReader productReader;
+
+    @Autowired
+    private OrderStore orderStore;
 
     @DisplayName("등록된 제품에는 예약상태를 포함한다.")
     @Test
@@ -63,7 +68,16 @@ class ProductReaderTest {
                 .role("user")
                 .username("username")
                 .build();
+
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+
         userStore.store(seller);
+        userStore.store(buyer);
 
         Product product1 = Product.builder()
                 .price(1000)
@@ -72,6 +86,15 @@ class ProductReaderTest {
                 .build();
         product1.reserved();
         productStore.store(product1);
+
+        Order order1 = Order.builder()
+                .buyerId(buyer.getId())
+                .productId(product1.getId())
+                .price(product1.getPrice())
+                .build();
+        order1.reserve();
+        orderStore.store(order1);
+
 
         // when
         List<Product> products = productReader.getReservedProductsBySellerId(seller.getId());

@@ -28,7 +28,7 @@ public class Product extends BaseEntity {
 
     private String productToken;
 
-    @Column(name = "sellerId")
+    @Column(name = "seller_id")
     private Long sellerId;
 
     @Column(name = "name")
@@ -75,6 +75,10 @@ public class Product extends BaseEntity {
 
     public void completed() {
         this.status = Status.END_OF_SALE;
+    }
+
+    public void changePrice(Integer price) {
+        this.price = price;
     }
 
     protected Product() {

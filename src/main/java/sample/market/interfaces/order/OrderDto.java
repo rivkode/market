@@ -20,22 +20,17 @@ public class OrderDto {
         @NotNull(message = "productId는 필수입력값입니다.")
         private Long productId;
 
-        @NotNull(message = "price는 필수입력값입니다.")
-        private Integer price;
-
         public OrderCommand.RegisterOrder toCommand() {
             return OrderCommand.RegisterOrder.builder()
                     .buyerId(buyerId)
                     .productId(productId)
-                    .price(price)
                     .build();
         }
 
         @Builder
-        public RegisterRequest(Long buyerId, Long productId, Integer price) {
+        public RegisterRequest(Long buyerId, Long productId) {
             this.buyerId = buyerId;
             this.productId = productId;
-            this.price = price;
         }
     }
 
@@ -128,6 +123,27 @@ public class OrderDto {
             this.sellerId = sellerId;
             this.productId = productId;
             this.orderId = orderId;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class ReserveRequest {
+        @NotNull(message = "sellerId는 필수입력값입니다.")
+        private Long sellerId;
+
+        @NotNull(message = "productId는 필수입력값입니다.")
+        private Long productId;
+
+        @NotNull(message = "orderId는 필수입력값입니다.")
+        private Long orderId;
+
+        public OrderCommand.ReserveOrder toCommand() {
+            return OrderCommand.ReserveOrder.builder()
+                    .orderId(orderId)
+                    .productId(productId)
+                    .sellerId(sellerId)
+                    .build();
         }
     }
 }

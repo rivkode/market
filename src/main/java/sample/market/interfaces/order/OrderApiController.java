@@ -52,4 +52,14 @@ public class OrderApiController {
                 .body(response);
     }
 
+    @PostMapping("/reserve")
+    public ResponseEntity<CompleteResponse> reserveOrder(
+            @Valid @RequestBody ReserveRequest request) {
+        OrderCommand.ReserveOrder command = request.toCommand();
+        OrderInfo orderInfo = orderFacade.reserveOrder(command);
+        CompleteResponse response = new CompleteResponse(orderInfo);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
+    }
 }

@@ -110,7 +110,7 @@ class OrderReaderTest {
         orderStore.store(order);
 
         // when
-        List<Order> orders = orderReader.getCompletedProducts(buyer.getId());
+        List<Order> orders = orderReader.getOrdersComplete(buyer.getId());
 
         // then
         assertThat(orders).hasSize(1)
@@ -155,7 +155,7 @@ class OrderReaderTest {
         orderStore.store(order);
 
         // when
-        List<Order> orders = orderReader.getInitProducts(buyer.getId());
+        List<Order> orders = orderReader.getOrdersInit(buyer.getId());
 
         // then
         assertThat(orders).hasSize(1)

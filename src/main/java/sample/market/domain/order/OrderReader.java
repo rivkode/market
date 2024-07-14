@@ -6,9 +6,11 @@ public interface OrderReader {
 
     Order getOrder(Long orderId);
 
-    List<Order> getCompletedProducts(Long buyerId);
+    List<Order> getOrdersComplete(Long buyerId);
 
-    List<Order> getInitProducts(Long buyerId);
+    List<Order> getOrdersInit(Long buyerId);
+
+    List<Order> getOrdersReserve(Long buyerId);
 
     Boolean existsByProductIdAndStatusNotOrderComplete(Long productId);
 }

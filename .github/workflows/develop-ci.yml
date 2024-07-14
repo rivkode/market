@@ -53,6 +53,12 @@ jobs:
           mysql user: rivkode # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
           mysql password: ${{ secrets.DB_PASSWORD }}
 
+      - name: Wait for MySQL
+        run: |
+          while ! mysqladmin ping --host=127.0.0.1 --password=$DB_PASSWORD --silent; do
+            sleep 1
+          done
+
       - name: properties 파일 생성
         run: |
           cd ./src/main
@@ -74,12 +80,6 @@ jobs:
 
       - name: 빌드 진행
         run: ./gradlew build -x test
-
-      - name: Wait for MySQL
-        run: |
-          while ! mysqladmin ping --host=127.0.0.1 --password=$DB_PASSWORD --silent; do
-            sleep 1
-          done
 
       - name: 테스트 코드 실행
         run: ./gradlew --info test
