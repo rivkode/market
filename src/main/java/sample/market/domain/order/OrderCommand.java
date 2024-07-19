@@ -43,4 +43,12 @@ public class OrderCommand {
         private final Long productId;
         private final Long orderId;
     }
+
+    @Getter
+    @Builder
+    public static class CancelOrder {
+        private final Long sellerId;
+        private final Long productId;
+        private final Long orderId;
+    }
 }

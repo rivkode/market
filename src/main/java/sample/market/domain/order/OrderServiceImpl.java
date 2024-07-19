@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sample.market.application.stock.StockFacade;
 import sample.market.domain.order.Order.Status;
 import sample.market.domain.order.OrderCommand.ApproveOrder;
+import sample.market.domain.order.OrderCommand.CancelOrder;
 import sample.market.domain.order.OrderCommand.CompleteOrder;
 import sample.market.domain.order.OrderCommand.ReserveOrder;
 import sample.market.domain.product.Product;
@@ -87,6 +88,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderInfo reserveOrder(ReserveOrder command) {
         Order order = orderReader.getOrder(command.getOrderId());
 
@@ -97,6 +99,23 @@ public class OrderServiceImpl implements OrderService {
         order.reserve();
 
         productManager.updateProductStatus(order.getProductId());
+
+        return new OrderInfo(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderInfo cancelOrder(CancelOrder command) {
+        Order order = orderReader.getOrder(command.getOrderId());
+
+        // 구매가 완료되었을 경우 취소 불가 (환불요청)
+
+        if (order.getStatus().equals(Status.ORDER_COMPLETE)) {
+            throw new IllegalStateException(
+                    "거래 Id : " + order.getId() + " / 해당 거래 상태는 " + order.getStatus() + " 이며 이미 완료된 거래는 취소가 불가합니다.");
+        }
+        order.cancel();
+        // 수량 감소
 
         return new OrderInfo(order);
     }
