@@ -24,6 +24,36 @@ public class ProductCommand {
 
     @Getter
     @Builder
+    public static class RetrieveProducts {
+        private final Long buyerId;
+        private final Long sellerId;
+        private final ProductRetrieveStatus status;
+
+        public void validateCriteria() {
+            if (status == null) {
+                throw new IllegalArgumentException("status는 필수입력값입니다.");
+            }
+
+            if (status == ProductRetrieveStatus.PURCHASED) {
+                if (buyerId == null) {
+                    throw new IllegalArgumentException("status=PURCHASED 인 경우 buyerId는 필수입니다.");
+                }
+                if (sellerId != null) {
+                    throw new IllegalArgumentException("status=PURCHASED 인 경우 sellerId는 허용되지 않습니다.");
+                }
+                return;
+            }
+
+            if (status == ProductRetrieveStatus.RESERVED) {
+                if ((buyerId == null && sellerId == null) || (buyerId != null && sellerId != null)) {
+                    throw new IllegalArgumentException("status=RESERVED 인 경우 buyerId 또는 sellerId 중 하나만 입력해야 합니다.");
+                }
+            }
+        }
+    }
+
+    @Getter
+    @Builder
     public static class RetrievePurchaseProduct {
         private final Long buyerId;
 

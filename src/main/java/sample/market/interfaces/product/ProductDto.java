@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import sample.market.domain.product.Product.Status;
 import sample.market.domain.product.ProductCommand;
 import sample.market.domain.product.ProductInfo;
+import sample.market.domain.product.ProductRetrieveStatus;
 
 public class ProductDto {
     @Getter
@@ -66,6 +67,31 @@ public class ProductDto {
         @Builder
         public RetrievePurchasedRequest(Long buyerId) {
             this.buyerId = buyerId;
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class RetrieveRequest {
+        private Long buyerId;
+        private Long sellerId;
+
+        @NotNull(message = "status는 필수입력값입니다.")
+        private ProductRetrieveStatus status;
+
+        public ProductCommand.RetrieveProducts toRetrieveCommand() {
+            return ProductCommand.RetrieveProducts.builder()
+                    .buyerId(buyerId)
+                    .sellerId(sellerId)
+                    .status(status)
+                    .build();
+        }
+
+        @Builder
+        public RetrieveRequest(Long buyerId, Long sellerId, ProductRetrieveStatus status) {
+            this.buyerId = buyerId;
+            this.sellerId = sellerId;
+            this.status = status;
         }
     }
 
