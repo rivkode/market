@@ -8,6 +8,7 @@ import sample.market.application.stock.StockFacade;
 import sample.market.domain.order.Order.Status;
 import sample.market.domain.order.OrderCommand.ApproveOrder;
 import sample.market.domain.order.OrderCommand.CompleteOrder;
+import sample.market.domain.order.OrderCommand.RetrieveOrders;
 import sample.market.domain.order.OrderCommand.ReserveOrder;
 import sample.market.domain.product.Product;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
@@ -34,6 +35,16 @@ public class OrderServiceImpl implements OrderService {
         stockFacade.decreaseWithRedissonLock(command.getProductId());
 
         return new OrderInfo(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderInfo> retrieveOrders(RetrieveOrders command) {
+        List<Order> orders = orderReader.getOrders(command.getBuyerId(), command.getProductId(),
+                command.getStatuses());
+        return orders.stream()
+                .map(OrderInfo::new)
+                .toList();
     }
 
     @Override

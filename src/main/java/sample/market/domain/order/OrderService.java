@@ -4,12 +4,15 @@ package sample.market.domain.order;
 import java.util.List;
 import sample.market.domain.order.OrderCommand.ApproveOrder;
 import sample.market.domain.order.OrderCommand.CompleteOrder;
+import sample.market.domain.order.OrderCommand.RetrieveOrders;
 import sample.market.domain.order.OrderCommand.ReserveOrder;
 import sample.market.domain.product.ProductCommand.RetrievePurchaseProduct;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
 
 public interface OrderService {
     OrderInfo registerOrder(OrderCommand.RegisterOrder command);
+
+    List<OrderInfo> retrieveOrders(RetrieveOrders command);
 
     List<Order> retrieveCompletedOrders(RetrievePurchaseProduct command);
 

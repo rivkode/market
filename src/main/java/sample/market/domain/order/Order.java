@@ -16,7 +16,10 @@ import sample.market.common.base.BaseEntity;
 
 @Entity(name = "orders")
 @Getter
-@Table(indexes = {@Index(name = "buyer_id_idx", columnList = "buyerId")})
+@Table(indexes = {
+        @Index(name = "buyer_id_idx", columnList = "buyer_id"),
+        @Index(name = "buyer_product_idx", columnList = "buyer_id, product_id")
+})
 public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,5 +1,7 @@
 package sample.market.domain.order;
 
+import java.util.Arrays;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,6 +18,22 @@ public class OrderCommand {
                     .buyerId(buyerId)
                     .productId(productId)
                     .price(price)
+                    .build();
+        }
+    }
+
+    @Getter
+    @Builder
+    public static class RetrieveOrders {
+        private final Long buyerId;
+        private final Long productId;
+        private final List<Order.Status> statuses;
+
+        public static RetrieveOrders of(Long buyerId, Long productId) {
+            return RetrieveOrders.builder()
+                    .buyerId(buyerId)
+                    .productId(productId)
+                    .statuses(Arrays.asList(Order.Status.values()))
                     .build();
         }
     }
