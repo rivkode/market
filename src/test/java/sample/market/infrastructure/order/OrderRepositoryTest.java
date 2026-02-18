@@ -3,6 +3,7 @@ package sample.market.infrastructure.order;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,6 +79,51 @@ class OrderRepositoryTest {
                 .containsExactlyInAnyOrder(
                         tuple(buyer.getId(), product1.getId())
                 );
+    }
+
+    @DisplayName("buyerId + productId + status in 조건으로 Order를 조회한다.")
+    @Test
+    void findByBuyerIdAndProductIdAndStatusIn() {
+        // given
+        User seller = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        User buyer = User.builder()
+                .email("email@email.com")
+                .password("password")
+                .role("user")
+                .username("username")
+                .build();
+        userStore.store(seller);
+        userStore.store(buyer);
+
+        Product product = Product.builder()
+                .price(1000)
+                .name("마스크")
+                .sellerId(seller.getId())
+                .build();
+        productStore.store(product);
+
+        Order order = Order.builder()
+                .buyerId(buyer.getId())
+                .productId(product.getId())
+                .price(product.getPrice())
+                .build();
+        orderStore.store(order);
+
+        // when
+        List<Order> orders = orderRepository.findByBuyerIdAndProductIdAndStatusIn(
+                buyer.getId(),
+                product.getId(),
+                Arrays.asList(Status.values()));
+
+        // then
+        assertThat(orders).hasSize(1)
+                .extracting("buyerId", "productId")
+                .containsExactly(tuple(buyer.getId(), product.getId()));
     }
 
     @DisplayName("buyerId와 Status 조건으로 Order를 조회한다.")

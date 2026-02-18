@@ -11,6 +11,10 @@ import sample.market.domain.order.Order.Status;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    List<Order> findByBuyerIdAndProductIdAndStatusIn(Long buyerId, Long productId, List<Status> statuses);
+
+    List<Order> findByBuyerIdAndStatusIn(Long buyerId, List<Status> statuses);
+
     /**
      * select *
      * from order

@@ -1,14 +1,14 @@
 package sample.market.interfaces.order;
 
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import sample.market.domain.order.Order.Status;
 import sample.market.domain.order.OrderCommand;
 import sample.market.domain.order.OrderInfo;
-import sample.market.domain.product.ProductInfo;
-import sample.market.interfaces.product.ProductDto;
 
 public class OrderDto {
     @Getter
@@ -54,6 +54,35 @@ public class OrderDto {
             this.productId = orderInfo.getProductId();
             this.status = orderInfo.getStatus();
 
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class RetrieveResponse {
+        private List<OrderInfo> orderInfos;
+
+        public RetrieveResponse(List<OrderInfo> orderInfos) {
+            this.orderInfos = orderInfos;
+        }
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class RetrieveRequest {
+        @NotNull(message = "buyerId는 필수입력값입니다.")
+        private Long buyerId;
+        private Long productId;
+
+        public OrderCommand.RetrieveOrders toCommand() {
+            return OrderCommand.RetrieveOrders.of(buyerId, productId);
+        }
+
+        @Builder
+        public RetrieveRequest(Long buyerId, Long productId) {
+            this.buyerId = buyerId;
+            this.productId = productId;
         }
     }
 
