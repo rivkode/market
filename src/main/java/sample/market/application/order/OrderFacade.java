@@ -36,4 +36,9 @@ public class OrderFacade {
         OrderInfo orderInfo = orderService.reserveOrder(command);
         return orderInfo;
     }
+
+    public OrderInfo cancelOrder(CancelOrder command) {
+        OrderInfo orderInfo = orderService.cancelOrder(command);
+        return orderInfo;
+    }
 }
