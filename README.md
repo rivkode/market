@@ -1,8 +1,8 @@
 # Market API
 
-사용자간 거래가 가능한 Wanted Market API를 생성해야합니다. 요구사항에 맞춰 진행해주세요. 요구사항은 공통과 1단계(필수), 2단계(선택) 로 나누어져 있습니다.
+사용자간 거래가 가능한 Market API를 생성합니다. 요구사항에 맞춰 진행합니다
 
-공통과 1단계는 필수로 진행해주시고, 2단계는 1단계를 마무리한 이후에 순차적으로 진행하시는 것을 추천합니다. 스프린트를 진행하면서 기능이 어떻게 발전해나가는지 사전 과제를 통해서 경험해봅니다.
+Test 코드 작성을 통해 가독성과 코드 품질을 향상시킵니다.
 
 - [DB 성능 개선](#db-performance)
 - [동시성 테스트 결과](#concurrency-test)
@@ -252,6 +252,7 @@ Index range scan on p using PRIMARY over (id < 20000)
 ```
 
 
+<a id="architecture-layers"></a>
 # Architecture Layers
 
 Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 유연한 아키텍처로 설계합니다.
@@ -330,6 +331,7 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 <br>
 
+<a id="exception-handling"></a>
 # Exception 핸들링
 
 가독성과 편의를 위해 표준예외를 사용합니다.
@@ -346,6 +348,7 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 <br>
 
+<a id="requirements"></a>
 # 요구사항
 
 1단계
@@ -369,20 +372,17 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
     - 예) 구매자 A가 구매하기 요청한 당시의 제품 B의 가격이 3000원이었고 이후에 4000원으로 바뀌었다 하더라도 목록에서는 3000원으로 나타나야합니다.
     - 여기서의 예약중은 상품의 상태 예약중이 아닌 거래 상태의 예약중을 의미한다.
 
-3단계
-- 구매취소가 가능합니다.
-- 로그인 기능이 추가됩니다.
-- 구매는 로그인한 회원만 가능합니다.
-  
 <br>
 
 # 공통
 
+구매취소는 고려하지 않습니다.
 검증이 필요한 부분에 대해 테스트코드를 작성해주세요.
 작성한 API에 대한 명세를 작성해주세요.
 
 <br>
 
+<a id="api-spec"></a>
 # API 명세
 
 ## 제품
@@ -393,27 +393,26 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 ```json
 {
-  "name" : "sample product",
-  "price" : 1000
-
+  "name" : "sample",
+  "price" : 123
 }
 ```
 
 ### 구매한 제품 조회
 
-#### GET /products/purchase
+#### GET /api/v1/products?buyerId&status=PURCHASED
 
 > buyerId: 구매자 Id
 
 ### 예약한 제품 구매자가 조회
 
-#### GET /products/reserved/seller
+#### GET /api/v1/products?buyerId&status=RESERVED
 
 > buyerId: 구매자 Id
 
 ### 예약한 제품 판매자가 조회
 
-#### GET /products/reserved/buyer
+#### GET /api/v1/products?sellerId&status=RESERVED
 
 > sellerId: 판매자 Id
 
@@ -425,12 +424,11 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 #### [POST] /api/v1/orders
 
+
 ```json
 {
-  "buyerId" :123,
-  "productId" : 123,
-  "price" : 5000
-
+  "buyerId" : 123,
+  "productId" : 123
 }
 ```
 
@@ -438,12 +436,11 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 #### [POST] /api/v1/orders/approve
 
+
 ```json
 {
-  "productId" : 123,
   "sellerId" : 123,
-  "orderId" : 123
-
+  "productId" : 123
 }
 ```
 
@@ -453,12 +450,17 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 ```json
 {
-  "productId" : 123,
   "sellerId" : 123,
-  "orderId" : 123
-
+  "productId" : 123,
+  "orderId" : 5000
 }
 ```
+
+### 주문 조회
+
+#### [GET] /api/v1/orders?buyerId=123
+
+> buyerId: 구매자 Id
 
 <br>
 
@@ -468,9 +470,11 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 #### [POST] /api/v1/users
 
+
+
 ```json
 {
-  "userId" : 123,
+  "email" : "sample@gmail.com",
   "username" : "username",
   "password" : "password"
 }
