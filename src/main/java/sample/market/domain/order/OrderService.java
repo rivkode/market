@@ -3,6 +3,7 @@ package sample.market.domain.order;
 
 import java.util.List;
 import sample.market.domain.order.OrderCommand.ApproveOrder;
+import sample.market.domain.order.OrderCommand.CancelOrder;
 import sample.market.domain.order.OrderCommand.CompleteOrder;
 import sample.market.domain.order.OrderCommand.RetrieveOrders;
 import sample.market.domain.order.OrderCommand.ReserveOrder;
@@ -23,4 +24,6 @@ public interface OrderService {
     OrderInfo completeOrder(CompleteOrder command);
 
     OrderInfo reserveOrder(ReserveOrder command);
+
+    OrderInfo cancelOrder(CancelOrder command);
 }
