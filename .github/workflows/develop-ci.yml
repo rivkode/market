@@ -22,7 +22,7 @@ jobs:
       MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
+      REDIS_PASSWORD: redis123
 
     services:
       mysql:
@@ -42,10 +42,14 @@ jobs:
 
       redis:
         image: redis:7-alpine
+        env:
+          REDIS_PASSWORD: redis123
+        command: >
+          redis-server --requirepass redis123
         ports:
           - 6379:6379
         options: >-
-          --health-cmd="redis-cli ping"
+          --health-cmd="redis-cli -a redis123 ping"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
