@@ -1,5 +1,6 @@
 package sample.market.application.order;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import sample.market.domain.order.OrderCommand.*;
@@ -15,6 +16,10 @@ public class OrderFacade {
     public OrderInfo registerOrder(RegisterOrder command) {
         OrderInfo orderInfo = orderService.registerOrder(command);
         return orderInfo;
+    }
+
+    public List<OrderInfo> retrieveOrders(RetrieveOrders command) {
+        return orderService.retrieveOrders(command);
     }
 
     public OrderInfo approveOrder(ApproveOrder command) {

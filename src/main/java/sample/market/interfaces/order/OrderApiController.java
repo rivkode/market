@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +14,7 @@ import sample.market.application.order.OrderFacade;
 import sample.market.domain.order.OrderCommand;
 import sample.market.domain.order.OrderInfo;
 import sample.market.interfaces.order.OrderDto.*;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +30,18 @@ public class OrderApiController {
         RegisterResponse response = new RegisterResponse(orderInfo);
 
         return ResponseEntity.status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<RetrieveResponse> retrieveOrder(
+        @Valid @ModelAttribute RetrieveRequest request
+    ) {
+        OrderCommand.RetrieveOrders command = request.toCommand();
+        List<OrderInfo> orderInfos = orderFacade.retrieveOrders(command);
+        RetrieveResponse response = new RetrieveResponse(orderInfos);
+
+        return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
     }
 

@@ -2,186 +2,136 @@ package sample.market.domain.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import sample.market.domain.order.Order;
-import sample.market.domain.order.OrderStore;
+import sample.market.domain.order.OrderReader;
 import sample.market.domain.product.Product.Status;
 import sample.market.domain.product.ProductCommand.RetrieveReservedProductsByBuyer;
-import sample.market.domain.product.ProductCommand.RetrieveReservedProductsBySeller;
-import sample.market.domain.user.User;
-import sample.market.domain.user.UserStore;
+import sample.market.domain.stock.StockManager;
 
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
-    @Autowired
+
+    @Mock
     private ProductStore productStore;
+    @Mock
+    private ProductReader productReader;
+    @Mock
+    private ProductInfoMapper productInfoMapper;
+    @Mock
+    private StockManager stockManager;
+    @Mock
+    private OrderReader orderReader;
 
-    @Autowired
-    private UserStore userStore;
-
-    @Autowired
-    private ProductService productService;
-
-    @Autowired
-    private OrderStore orderStore;
+    @InjectMocks
+    private ProductServiceImpl productService;
 
     @DisplayName("등록된 제품에는 상세조회시에 예약상태를 포함한다.")
     @Test
     void getProductStatus() {
-        // given
-        User user = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        userStore.store(user);
-
         Product product1 = Product.builder()
                 .price(1000)
                 .name("마스크")
-                .sellerId(user.getId())
+                .sellerId(1L)
                 .build();
-        productStore.store(product1);
+        when(productReader.getProduct(1L)).thenReturn(product1);
 
+        ProductInfo getProduct = productService.retrieveProduct(1L);
 
-        // when
-        ProductInfo getProduct = productService.retrieveProduct(product1.getId());
-
-        // then
         assertThat(getProduct.getStatus()).isEqualTo(Status.PREPARE);
     }
-
 
     @DisplayName("등록된 제품에는 목록조회시에 예약상태를 포함한다.")
     @Test
     void getProductListStatus() {
-        // given
-        User user = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        userStore.store(user);
-
         Product product1 = Product.builder()
                 .price(1000)
                 .name("마스크")
-                .sellerId(user.getId())
+                .sellerId(1L)
                 .build();
         Product product2 = Product.builder()
                 .price(3000)
                 .name("충전기")
-                .sellerId(user.getId())
+                .sellerId(1L)
                 .build();
-        productStore.storeAll(List.of(product1, product2));
+        List<Product> products = List.of(product1, product2);
+        List<ProductInfo> infos = List.of(new ProductInfo(product1), new ProductInfo(product2));
 
+        when(productReader.getProductListByIds(List.of(1L, 2L))).thenReturn(products);
+        when(productInfoMapper.of(products)).thenReturn(infos);
 
-        // when
-        List<ProductInfo> getProductList = productService.retrieveProductList(List.of(product1.getId(), product2.getId()));
+        List<ProductInfo> getProductList = productService.retrieveProductList(List.of(1L, 2L));
 
-        // then
         assertThat(getProductList).hasSize(2)
                 .extracting("status", "price", "name")
                 .containsExactlyInAnyOrder(
                         tuple(Status.PREPARE, 1000, "마스크"),
                         tuple(Status.PREPARE, 3000, "충전기")
                 );
-
     }
 
     @DisplayName("상품 등록시 등록한 정보가 반환된다.")
     @Test
     void register() {
-        // given
-        User user = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        userStore.store(user);
-
-        Product product1 = Product.builder()
-                .price(1000)
-                .name("마스크")
-                .sellerId(user.getId())
-                .build();
-        productStore.store(product1);
-
         ProductCommand.RegisterProduct command = ProductCommand.RegisterProduct.builder()
-                .sellerId(user.getId())
-                .name(product1.getName())
-                .price(product1.getPrice())
+                .sellerId(1L)
+                .name("마스크")
+                .price(1000)
+                .quantity(10L)
                 .build();
+        Product stored = command.toEntity();
+        when(productStore.store(any(Product.class))).thenReturn(stored);
 
-        // when
         ProductInfo productInfo = productService.registerProduct(command);
 
-        // then
-        assertThat(productInfo.getSellerId()).isEqualTo(user.getId());
-        assertThat(productInfo.getStatus()).isEqualTo(product1.getStatus());
-        assertThat(productInfo.getName()).isEqualTo(product1.getName());
-        assertThat(productInfo.getPrice()).isEqualTo(product1.getPrice());
+        assertThat(productInfo.getSellerId()).isEqualTo(1L);
+        assertThat(productInfo.getStatus()).isEqualTo(stored.getStatus());
+        assertThat(productInfo.getName()).isEqualTo(stored.getName());
+        assertThat(productInfo.getPrice()).isEqualTo(stored.getPrice());
     }
 
     @DisplayName("구매 상품 조회시 구매시 가격을 나타냅니다.")
     @Test
     void retrievePurchasedProducts() {
-        // given
-        User seller = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        User buyer = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("buyer")
-                .build();
-        userStore.store(seller);
-        userStore.store(buyer);
-
         int originalPrice = 1000;
         int changePrice = 2000;
 
         Product product1 = Product.builder()
                 .price(originalPrice)
                 .name("마스크")
-                .sellerId(seller.getId())
+                .sellerId(1L)
                 .build();
         product1.reserved();
-        productStore.store(product1);
 
         Order order = Order.builder()
                 .price(originalPrice)
-                .productId(product1.getId())
-                .buyerId(buyer.getId())
+                .productId(1L)
+                .buyerId(2L)
                 .build();
         order.complete();
-        orderStore.store(order);
 
         ProductCommand.RetrievePurchaseProduct command = ProductCommand.RetrievePurchaseProduct.builder()
-                .buyerId(buyer.getId())
+                .buyerId(2L)
                 .build();
 
-        // when
         product1.changePrice(changePrice);
-        productStore.store(product1);
+        List<ProductInfo> mapped = List.of(ProductInfo.builder().product(product1).purchasePrice(originalPrice).build());
+
+        when(orderReader.getOrdersComplete(2L)).thenReturn(List.of(order));
+        when(productReader.getProductListByIds(List.of(1L))).thenReturn(List.of(product1));
+        when(productInfoMapper.toProductInfos(List.of(product1), List.of(originalPrice))).thenReturn(mapped);
 
         List<ProductInfo> productInfos = productService.retrievePurchasedProducts(command);
 
-        // then
         assertThat(productInfos).hasSize(1)
                 .extracting("name", "purchasePrice")
                 .containsExactlyInAnyOrder(
@@ -192,65 +142,50 @@ class ProductServiceTest {
     @DisplayName("구매자는 예약된 상품을 조회합니다.")
     @Test
     void retrieveReservedProductsByBuyer() {
-        // given
-        User seller = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        User buyer = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        userStore.store(seller);
-        userStore.store(buyer);
-
         int originalPrice = 1000;
         int changePrice = 2000;
 
         Product product1 = Product.builder()
                 .price(originalPrice)
                 .name("마스크")
-                .sellerId(seller.getId())
+                .sellerId(1L)
                 .build();
-
         Product product2 = Product.builder()
                 .price(originalPrice)
                 .name("충전기")
-                .sellerId(seller.getId())
+                .sellerId(1L)
                 .build();
-        productStore.storeAll(List.of(product1, product2));
 
         Order order1 = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product1.getId())
-                .price(product1.getPrice())
+                .buyerId(2L)
+                .productId(1L)
+                .price(originalPrice)
                 .build();
-
         Order order2 = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product2.getId())
-                .price(product2.getPrice())
+                .buyerId(2L)
+                .productId(2L)
+                .price(originalPrice)
                 .build();
         order1.reserve();
         order2.reserve();
-        orderStore.store(order1);
-        orderStore.store(order2);
 
-        ProductCommand.RetrieveReservedProductsByBuyer command = ProductCommand.RetrieveReservedProductsByBuyer.builder()
-                .buyerId(buyer.getId())
+        RetrieveReservedProductsByBuyer command = RetrieveReservedProductsByBuyer.builder()
+                .buyerId(2L)
                 .build();
 
-        // when
         product1.changePrice(changePrice);
-        productStore.store(product1);
+        List<ProductInfo> mapped = List.of(
+                ProductInfo.builder().product(product1).purchasePrice(originalPrice).build(),
+                ProductInfo.builder().product(product2).purchasePrice(originalPrice).build()
+        );
+
+        when(orderReader.getOrdersReserve(2L)).thenReturn(List.of(order1, order2));
+        when(productReader.getProductListByIds(List.of(1L, 2L))).thenReturn(List.of(product1, product2));
+        when(productInfoMapper.toProductInfos(List.of(product1, product2), List.of(originalPrice, originalPrice)))
+                .thenReturn(mapped);
 
         List<ProductInfo> productInfos = productService.retrieveReservedProductsByBuyer(command);
 
-        // then
         assertThat(productInfos).hasSize(2)
                 .extracting("name", "purchasePrice")
                 .containsExactlyInAnyOrder(
@@ -258,8 +193,4 @@ class ProductServiceTest {
                         tuple(product2.getName(), originalPrice)
                 );
     }
-
-
-
-
 }

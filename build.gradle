@@ -63,6 +63,13 @@ ext {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // Forward manual perf-test flag from Gradle JVM to test JVM
+    systemProperty 'runPerfTest', System.getProperty('runPerfTest', 'false')
+    if (System.getProperty('runPerfTest', 'false') == 'true') {
+        testLogging {
+            showStandardStreams = true
+        }
+    }
     finalizedBy jacocoTestReport  // 테스트 실행 후 항상 report가 생성됩니다.
     outputs.dir snippetsDir // (6)
 }

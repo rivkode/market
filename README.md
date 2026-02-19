@@ -1,11 +1,258 @@
 # Market API
 
-사용자간 거래가 가능한 Wanted Market API를 생성해야합니다. 요구사항에 맞춰 진행해주세요. 요구사항은 공통과 1단계(필수), 2단계(선택) 로 나누어져 있습니다.
-
-공통과 1단계는 필수로 진행해주시고, 2단계는 1단계를 마무리한 이후에 순차적으로 진행하시는 것을 추천합니다. 스프린트를 진행하면서 기능이 어떻게 발전해나가는지 사전 과제를 통해서 경험해봅니다.
+사용자간 거래가 가능한 Market API를 생성합니다. 요구사항에 맞춰 진행합니다
 
 Test 코드 작성을 통해 가독성과 코드 품질을 향상시킵니다.
 
+- [DB 성능 개선](#db-performance)
+- [동시성 테스트 결과](#concurrency-test)
+- [Architecture Layers](#architecture-layers)
+- [Exception 핸들링](#exception-handling)
+- [요구사항](#requirements)
+- [API 명세](#api-spec)
+
+<br>
+
+<a id="db-performance"></a>
+# DB 성능 개선
+
+## 실험 방법 및 재현 가이드
+
+정확한 성능 비교를 위해, 동일 데이터셋과 동일 쿼리 조건에서 인덱스 생성/삭제 전후를 반복 측정했습니다.
+
+- 더미 데이터 생성 SQL: `perf/mysql/01_generate_dummy_data.sql`
+  - `product` 100,000건 이상, `orders` 100,000건 이상 데이터 생성
+- 인덱스 관리 SQL: `perf/mysql/02_index_manage.sql`
+  - 실험 대상 인덱스 생성/삭제 스크립트 제공
+- 벤치마크 쿼리 SQL: `perf/mysql/03_benchmark_queries.sql`
+  - `EXPLAIN ANALYZE` 기반 조회 성능 비교 쿼리 제공
+- 성능 측정 테스트 코드: `src/test/java/sample/market/performance/IndexPerformanceReportTest.java`
+  - 인덱스 전/후 시간을 측정하고 요약표 형태로 출력
+  - 수동 실행 전용: `-DrunPerfTest=true` 옵션 필요
+
+실행 순서:
+1. docker compose 로 MySQL 컨테이너 실행 후 더미 데이터 적재
+2. 인덱스 없는 상태/있는 상태를 기준으로 `EXPLAIN ANALYZE` 비교
+3. 성능 테스트 코드 실행으로 수치 요약
+4. 결과를 표와 상세 분석으로 문서화
+
+테스트 실행 예시:
+```bash
+./gradlew test --tests "sample.market.performance.IndexPerformanceReportTest" -DrunPerfTest=true
+```
+
+## 성능 개선 요약
+
+| 기능 | 인덱스 전 쿼리 시간 | 인덱스 후 쿼리 시간 | 개선율 | 비고 |
+|---|---:|---:|---:|---|
+| 주문 조회 (`orders`), 인덱스 없음 -> 단일 인덱스 | 47.2ms | 1.13ms | 약 97.6% 개선 | 단일 인덱스 (`buyer_id`), `product_id`는 후속 필터 |
+| 주문 조회 (`orders`), 인덱스 없음 -> 복합 인덱스 | 47.2ms | 0.529ms | 약 98.9% 개선 | 복합 인덱스 (`buyer_id`, `product_id`), 조건 매칭 최적 |
+| 주문 조회 (`orders`), 단일 인덱스 -> 복합 인덱스 | 1.13ms | 0.529ms | 약 53.2% 개선 | 단일 인덱스 대비 추가 개선 |
+| 상품 조회 (`product.status`) 인덱스 적용 | 20.1ms | 20.3ms | 약 1.0% 성능 저하 | 단일 인덱스 (status, 카디널리티가 낮음, 유의미 개선 없음) |
+| 상품 조회 + OFFSET 페이징 | - | 10.2ms | - | `OFFSET 20000` |
+| 상품 조회 + 커서 페이징 | - | 0.389ms | - | `id < 20000` offset 대비 약 96.2% 개선 |
+
+## 상세 분석
+
+### 1) 주문 조회 인덱스 비교 (`buyer_id`, `product_id`)
+
+조회 패턴:
+- `WHERE buyer_id = ? AND product_id = ? ORDER BY id DESC LIMIT 100`
+
+#### 1-1. 인덱스 전(실질적으로 PK 역순 전체 스캔)
+
+```sql
+EXPLAIN ANALYZE
+SELECT *
+FROM orders
+WHERE buyer_id = 123
+  AND product_id = 123
+ORDER BY id DESC
+LIMIT 100;
+```
+
+```text
+actual time=47.2..47.2
+Index scan on orders using PRIMARY (reverse) ... rows=100000
+```
+
+- `buyer_id`, `product_id`를 바로 타지 못해 full table scan 후 필터링이 발생했습니다.
+
+#### 1-2. 단일 인덱스 (`buyer_id_idx`) 사용
+```sql
+EXPLAIN ANALYZE
+SELECT *
+FROM orders
+WHERE buyer_id = 123
+  AND product_id = 123
+ORDER BY id DESC
+LIMIT 100;
+```
+
+```text
+actual time=1.05..1.13
+Index lookup on orders using buyer_id_idx (buyer_id=123)
+```
+
+- `buyer_id` 조건으로 후보군을 빠르게 줄여 성능이 크게 개선되었습니다.
+- 다만 `product_id`는 추가 비용이 남습니다.
+
+#### 1-3. 복합 인덱스 (`buyer_product_idx`) 사용
+```sql
+EXPLAIN ANALYZE
+SELECT *
+FROM orders
+WHERE buyer_id = 123
+  AND product_id = 123
+ORDER BY id DESC
+LIMIT 100;
+```
+
+```text
+actual time=0.444..0.529
+Index lookup on orders using buyer_product_idx (buyer_id=123, product_id=123)
+```
+
+- 조회 조건이 복합 인덱스 선두 컬럼 순서와 일치하여 가장 효율적인 경로를 탔습니다.
+
+### 2) 페이징 성능 비교
+
+#### 2-0. 상태 필터 인덱스 비효율 (저카디널리티)
+
+```sql
+EXPLAIN ANALYZE
+SELECT p.*
+FROM product p
+WHERE p.status = 'END_OF_SALE'
+ORDER BY p.id DESC
+LIMIT 20 OFFSET 20000;
+```
+
+```text
+인덱스 전: actual time=20.1..20.1
+인덱스 후: actual time=20.3..20.3
+```
+
+- `status = 'END_OF_SALE'` 조건이 대량 매칭되는 분포에서는 인덱스 선택도가 낮습니다.
+- 이번 실측에서는 인덱스 적용 전/후 차이가 거의 없었고(약 1% 저하), 성능 개선 효과가 확인되지 않았습니다.
+- 이 구간의 병목은 상태 인덱스보다 `OFFSET` 스캔 비용 영향이 더 큽니다.
+
+#### 2-1. OFFSET 페이징
+
+```sql
+EXPLAIN ANALYZE
+SELECT p.*
+FROM product p
+ORDER BY p.id DESC
+LIMIT 20 OFFSET 20000;
+```
+
+```text
+actual time=10.2..10.2 rows=20 loops=1
+```
+
+- 큰 OFFSET을 건너뛰기 위해 불필요한 행을 많이 읽어야 하므로 비용이 큽니다.
+
+#### 2-2. 커서 페이징
+```sql
+EXPLAIN ANALYZE
+SELECT p.*
+FROM product p
+WHERE p.id < 20000
+ORDER BY p.id DESC
+LIMIT 20;
+```
+
+```text
+actual time=0.379..0.389 rows=20 loops=1
+Index range scan on p using PRIMARY over (id < 20000)
+```
+
+- PK 범위를 직접 좁혀 읽기 때문에 deep offset 비용을 피합니다.
+- 동일 조건 기준 OFFSET(10.2ms) 대비 약 96.2% 개선되었습니다.
+
+
+### 3) 결론
+
+- 주문 조회는 `orders(buyer_id, product_id)` 복합 인덱스가 가장 효과적입니다.
+- 단일 인덱스(`buyer_id`)도 의미 있는 개선은 있지만, 복합 인덱스가 추가 이점을 제공합니다.
+- 페이징은 deep offset 구간에서 커서 기반이 훨씬 유리합니다.
+
+## 결론 요약
+
+- 인덱스 적용 결과, 주문 조회 핵심 구간에서 최대 약 98.9% 성능 개선을 확인했습니다.  
+  - 특히 `orders(buyer_id, product_id)` 복합 인덱스는 단일 인덱스 대비도 추가 개선 효과가 있었습니다.  
+  - 반면 `product.status`는 이번 실측에서 인덱스 전/후가 거의 동일해, 인덱스 효과가 크지 않았습니다.  
+- 페이징은 deep offset 구간에서 커서 기반(`id < cursor`)이 일반 OFFSET 방식보다 훨씬 안정적인 성능을 보였습니다.
+
+## CQRS 관점 인프라 요약
+
+- 조회(Read)는 리플리카 DB(슬레이브)로 분리하고, 쓰기(Write)는 마스터 DB에서 처리하는 구조가 유효합니다.
+- 이 구조는 읽기 부하 분산, 트래픽 피크 대응, 수평 확장성 확보에 유리합니다.
+
+<br>
+
+<a id="concurrency-test"></a>
+# 동시성 테스트 결과 (300건)
+
+`StockFacadeTest`에서 동일한 재고(`quantity=300`)에 대해 300개 요청을 동시에 발생시켜,
+락 전략별 재고 차감 결과와 처리 시간을 비교했습니다.
+
+- 테스트 코드: [StockFacadeTest.java](src/test/java/sample/market/application/product/stock/StockFacadeTest.java)
+- 실행 방식: `ExecutorService(100 threads)` + `CountDownLatch(300)`
+- 검증 조건: 모든 요청 완료 후 재고가 `0`인지 검증
+
+## 실측 결과
+
+| 구분 | 처리 시간 |
+|---|---:|
+| 비관적 락 (Pessimistic Lock) | 1.51초 |
+| 낙관적 락 (Optimistic Lock) | 16.61초 |
+
+- 동일 조건에서 비관적 락이 낙관적 락 대비 약 11배 빠르게 측정되었습니다.
+
+## 코드 기반 분석
+
+### 1) 비관적 락
+
+- 호출 경로:
+  - `StockFacade.decreaseWithPessimistic(...)`
+  - `StockServiceImpl.decreaseWithPessimistic(...)`
+  - `StockRepository.findByIdWithPessimisticLock(...)`
+- 구현 포인트:
+  - `StockRepository`에서 `@Lock(LockModeType.PESSIMISTIC_WRITE)` 사용
+  - DB 레벨에서 쓰기 락을 먼저 점유하여 충돌을 직렬화
+
+### 2) 낙관적 락
+
+- 호출 경로:
+  - `StockFacade.decreaseWithOptimistic(...)`
+  - `StockServiceImpl.decreaseWithOptimistic(...)`
+  - `StockRepository.findByIdWithOptimisticLock(...)`
+- 구현 포인트:
+  - `Stock` 엔티티의 `@Version` 필드 기반 충돌 감지
+  - 충돌 발생 시 재시도(backoff) 로직 수행
+  - `StockFacade`의 재시도 루프(`maxRetries=20`, sleep 50ms 지수 백오프) + `StockServiceImpl` 내부 재시도 대기(`Thread.sleep(100)`)로 인해 고경합 상황에서 누적 지연이 커짐
+
+## 해석
+
+- 본 시나리오처럼 동일 row에 대한 고경합(300건 동시 갱신)에서는,
+  충돌 이후 재시도 비용이 큰 낙관적 락보다 비관적 락이 더 유리했습니다.
+- 반대로, 충돌 가능성이 낮고 읽기 비중이 높은 트래픽에서는 낙관적 락이 유리할 수 있어,
+  트래픽 특성에 따라 락 전략을 분리 적용하는 것이 적절합니다.
+
+## 재현 방법
+
+사전 준비:
+- Redis/MySQL 실행 필요 (`docker-compose.yml` 기준)
+
+실행 예시:
+```bash
+./gradlew test --tests "sample.market.application.product.stock.StockFacadeTest"
+```
+
+
+<a id="architecture-layers"></a>
 # Architecture Layers
 
 Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 유연한 아키텍처로 설계합니다.
@@ -84,6 +331,7 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 <br>
 
+<a id="exception-handling"></a>
 # Exception 핸들링
 
 가독성과 편의를 위해 표준예외를 사용합니다.
@@ -100,6 +348,7 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 <br>
 
+<a id="requirements"></a>
 # 요구사항
 
 1단계
@@ -123,20 +372,17 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
     - 예) 구매자 A가 구매하기 요청한 당시의 제품 B의 가격이 3000원이었고 이후에 4000원으로 바뀌었다 하더라도 목록에서는 3000원으로 나타나야합니다.
     - 여기서의 예약중은 상품의 상태 예약중이 아닌 거래 상태의 예약중을 의미한다.
 
-3단계
-- 구매취소가 가능합니다.
-- 로그인 기능이 추가됩니다.
-- 구매는 로그인한 회원만 가능합니다.
-  
 <br>
 
 # 공통
 
+구매취소는 고려하지 않습니다.
 검증이 필요한 부분에 대해 테스트코드를 작성해주세요.
 작성한 API에 대한 명세를 작성해주세요.
 
 <br>
 
+<a id="api-spec"></a>
 # API 명세
 
 ## 제품
@@ -145,27 +391,30 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 #### [POST] /api/v1/products
 
-> name: 제품명
->
-> price: 제품 가격
+```json
+{
+  "name" : "sample",
+  "price" : 123
+}
+```
 
 ### 구매한 제품 조회
 
-#### GET /products/purchase
+#### GET /api/v1/products?buyerId&status=PURCHASED
+
+> buyerId: 구매자 Id
+
+### 예약한 제품 구매자가 조회
+
+#### GET /api/v1/products?buyerId&status=RESERVED
 
 > buyerId: 구매자 Id
 
 ### 예약한 제품 판매자가 조회
 
-#### GET /products/reserved/seller
+#### GET /api/v1/products?sellerId&status=RESERVED
 
 > sellerId: 판매자 Id
-
-### 예약한 제품 구매자가 조회
-
-#### GET /products/reserved/buyer
-
-> buyerId: 구매자 Id
 
 <br>
 
@@ -175,25 +424,43 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 #### [POST] /api/v1/orders
 
-> buyerId: 구매자 Id
-> productId: 상품 Id
-> price: 가격
+
+```json
+{
+  "buyerId" : 123,
+  "productId" : 123
+}
+```
 
 ### 제품 구매 승인
 
 #### [POST] /api/v1/orders/approve
 
-> productId: 제품 Id
-> sellerId : 구매자 Id
-> orderId : 거래 Id
+
+```json
+{
+  "sellerId" : 123,
+  "productId" : 123
+}
+```
 
 ### 제품 구매 확정
 
 #### [POST] /api/v1/orders/complete
 
-> productId: 제품 Id
-> sellerId : 구매자 Id
-> orderId : 거래 Id
+```json
+{
+  "sellerId" : 123,
+  "productId" : 123,
+  "orderId" : 5000
+}
+```
+
+### 주문 조회
+
+#### [GET] /api/v1/orders?buyerId=123
+
+> buyerId: 구매자 Id
 
 <br>
 
@@ -203,6 +470,16 @@ Layer 간의 참조 관계에서는 단방향 의존 유지를 통해 확장에 
 
 #### [POST] /api/v1/users
 
-> email : 이메일
-> username: 이름
-> password: 비밀번호
+
+
+```json
+{
+  "email" : "sample@gmail.com",
+  "username" : "username",
+  "password" : "password"
+}
+```
+
+<br>
+
+

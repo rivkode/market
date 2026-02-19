@@ -2,170 +2,84 @@ package sample.market.domain.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
-import sample.market.domain.product.Product;
-import sample.market.domain.product.ProductStore;
-import sample.market.domain.user.User;
-import sample.market.domain.user.UserStore;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import sample.market.domain.order.Order.Status;
+import sample.market.infrastructure.order.OrderReaderImpl;
+import sample.market.infrastructure.order.OrderRepository;
 
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class OrderReaderTest {
 
-    @Autowired
-    private UserStore userStore;
+    @Mock
+    private OrderRepository orderRepository;
 
-    @Autowired
-    private ProductStore productStore;
-
-    @Autowired
-    private OrderStore orderStore;
-
-    @Autowired
-    private OrderReader orderReader;
-
+    @InjectMocks
+    private OrderReaderImpl orderReader;
 
     @DisplayName("orderId로 주문 조회")
     @Test
     void getOrderByOrderId() {
-        // given
-        User seller = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        User buyer = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        userStore.store(seller);
-        userStore.store(buyer);
-
-        Product product1 = Product.builder()
-                .price(1000)
-                .name("마스크")
-                .sellerId(seller.getId())
-                .build();
-        productStore.store(product1);
-
         Order order = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product1.getId())
-                .price(product1.getPrice())
+                .buyerId(2L)
+                .productId(1L)
+                .price(1000)
                 .build();
-        orderStore.store(order);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
-        // when
-        Order getOrder = orderReader.getOrder(order.getId());
+        Order getOrder = orderReader.getOrder(1L);
 
-
-        // then
-        assertThat(getOrder.getPrice()).isEqualTo(product1.getPrice());
-        assertThat(getOrder.getProductId()).isEqualTo(product1.getId());
-        assertThat(getOrder.getBuyerId()).isEqualTo(buyer.getId());
+        assertThat(getOrder.getPrice()).isEqualTo(1000);
+        assertThat(getOrder.getProductId()).isEqualTo(1L);
+        assertThat(getOrder.getBuyerId()).isEqualTo(2L);
     }
 
     @DisplayName("구매자는 완료된 거래를 가져온다.")
     @Test
     void getPurchasedProducts() {
-        // given
-        User seller = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        User buyer = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        userStore.store(seller);
-        userStore.store(buyer);
-
-        Product product1 = Product.builder()
-                .price(1000)
-                .name("마스크")
-                .sellerId(seller.getId())
-                .build();
-        productStore.store(product1);
-
         Order order = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product1.getId())
-                .price(product1.getPrice())
+                .buyerId(2L)
+                .productId(1L)
+                .price(1000)
                 .build();
-
         order.complete();
-        orderStore.store(order);
+        when(orderRepository.findByBuyerIdAndStatus(2L, Status.ORDER_COMPLETE))
+                .thenReturn(List.of(order));
 
-        // when
-        List<Order> orders = orderReader.getOrdersComplete(buyer.getId());
+        List<Order> orders = orderReader.getOrdersComplete(2L);
 
-        // then
         assertThat(orders).hasSize(1)
                 .extracting("buyerId", "productId")
                 .containsExactlyInAnyOrder(
-                        tuple(buyer.getId(), product1.getId())
+                        tuple(2L, 1L)
                 );
-
     }
 
     @DisplayName("구매자는 시작된 거래를 가져온다.")
     @Test
     void getInitProducts() {
-        // given
-        User seller = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        User buyer = User.builder()
-                .email("email@email.com")
-                .password("password")
-                .role("user")
-                .username("username")
-                .build();
-        userStore.store(seller);
-        userStore.store(buyer);
-
-        Product product1 = Product.builder()
-                .price(1000)
-                .name("마스크")
-                .sellerId(seller.getId())
-                .build();
-        productStore.store(product1);
-
         Order order = Order.builder()
-                .buyerId(buyer.getId())
-                .productId(product1.getId())
-                .price(product1.getPrice())
+                .buyerId(2L)
+                .productId(1L)
+                .price(1000)
                 .build();
-        orderStore.store(order);
+        when(orderRepository.findByBuyerIdAndStatus(2L, Status.INIT))
+                .thenReturn(List.of(order));
 
-        // when
-        List<Order> orders = orderReader.getOrdersInit(buyer.getId());
+        List<Order> orders = orderReader.getOrdersInit(2L);
 
-        // then
         assertThat(orders).hasSize(1)
                 .extracting("buyerId", "productId")
                 .containsExactlyInAnyOrder(
-                        tuple(buyer.getId(), product1.getId())
+                        tuple(2L, 1L)
                 );
     }
-
-
-
-
 }

@@ -2,11 +2,13 @@ package sample.market.interfaces.order;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -19,6 +21,31 @@ import sample.market.interfaces.order.OrderDto.CompleteRequest;
 import sample.market.interfaces.order.OrderDto.RegisterRequest;
 
 class OrderApiControllerTest extends ControllerTestSupport {
+
+    @DisplayName("구매자는 주문 목록을 조회한다.")
+    @Test
+    void retrieveOrders() throws Exception {
+        // given
+        Order order = Order.builder()
+                .buyerId(2L)
+                .productId(1L)
+                .price(1000)
+                .build();
+        OrderInfo mockOrderInfo = new OrderInfo(order);
+        when(orderFacade.retrieveOrders(any(OrderCommand.RetrieveOrders.class)))
+                .thenReturn(List.of(mockOrderInfo));
+
+        // when // then
+        mockMvc.perform(
+                        get("/api/v1/orders")
+                                .queryParam("buyerId", "2")
+                                .queryParam("productId", "1")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderInfos[0].buyerId").value(2))
+                .andExpect(jsonPath("$.orderInfos[0].productId").value(1));
+    }
 
     @DisplayName("구매자는 상품을 구매한다.")
     @Test
