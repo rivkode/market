@@ -10,11 +10,13 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest
+@EnabledIfSystemProperty(named = "runPerfTest", matches = "true")
 class IndexPerformanceReportTest {
 
     private static final Pattern ACTUAL_TIME_PATTERN = Pattern.compile("actual time=([0-9.]+)\\.\\.([0-9.]+)");
@@ -247,3 +249,4 @@ class IndexPerformanceReportTest {
     ) {
     }
 }
+
