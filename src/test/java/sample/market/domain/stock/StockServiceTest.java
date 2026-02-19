@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import sample.market.domain.product.Product;
 import sample.market.domain.product.ProductStore;
-import sample.market.domain.stock.Stock;
-import sample.market.domain.stock.StockService;
 import sample.market.domain.user.User;
 import sample.market.domain.user.UserStore;
 import sample.market.infrastructure.stock.StockRepository;

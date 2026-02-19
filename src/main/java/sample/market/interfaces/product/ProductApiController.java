@@ -66,7 +66,7 @@ public class ProductApiController {
                 .body(response);
     }
 
-    @GetMapping(params = {"status"})
+    @GetMapping
     public ResponseEntity<RetrieveResponse> retrieveProductsByStatus(
             @Valid @ModelAttribute ProductDto.RetrieveRequest request) {
         ProductCommand.RetrieveProducts command = request.toRetrieveCommand();

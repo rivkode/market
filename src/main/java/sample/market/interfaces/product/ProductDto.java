@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import sample.market.domain.product.Product.Status;
 import sample.market.domain.product.ProductCommand;
 import sample.market.domain.product.ProductInfo;
@@ -71,6 +72,7 @@ public class ProductDto {
     }
 
     @Getter
+    @Setter
     @NoArgsConstructor
     public static class RetrieveRequest {
         private Long buyerId;
