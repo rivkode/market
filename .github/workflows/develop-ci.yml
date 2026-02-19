@@ -70,17 +70,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: properties 파일 생성
+      - name: Wait for MySQL and Redis readiness
         run: |
-          mkdir -p ./src/main/resources
-          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application.properties
+          set -e
+          echo "Waiting for MySQL on 127.0.0.1:3306..."
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/3306) >/dev/null 2>&1 && break
+            sleep 2
+          done
+          (echo > /dev/tcp/127.0.0.1/3306) >/dev/null 2>&1
 
-      - name: Verify application.properties
-        run: cat ./src/main/resources/application.properties
-        shell: bash
-
-      - name: Verify MySQL is running
-        run: sudo netstat -tlnp | grep 3306
+          echo "Waiting for Redis on 127.0.0.1:6379..."
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/6379) >/dev/null 2>&1 && break
+            sleep 2
+          done
+          (echo > /dev/tcp/127.0.0.1/6379) >/dev/null 2>&1
 
       - name: Run chmod to make gradlew executable
         run: chmod +x ./gradlew
@@ -103,4 +108,3 @@ jobs:
         if: success() || failure()
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
-
