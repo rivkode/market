@@ -19,7 +19,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_DATABASE: market_db
-          MYSQL_USER: root
+          MYSQL_USER: rivkode
           MYSQL_PASSWORD: root
           MYSQL_ROOT_PASSWORD: root
         ports:
@@ -86,7 +86,7 @@ jobs:
       - name: 테스트 코드 실행
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/market_db?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
-          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_USERNAME: rivkode
           SPRING_DATASOURCE_PASSWORD: root
           SPRING_DATA_REDIS_HOST: 127.0.0.1
           SPRING_DATA_REDIS_PORT: 6379
